@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Portal.Api.Data;
@@ -55,9 +56,13 @@ var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("JWT Secret not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "portal-api";
 
+// Disable automatic claim type mapping so "sub" stays as "sub" (not mapped to ClaimTypes.NameIdentifier)
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
@@ -108,9 +113,8 @@ app.UseCors("AllowFrontend");
 // Tenant middleware (before auth)
 app.UseTenantMiddleware();
 
-// TODO: Re-enable authentication
-// app.UseAuthentication();
-// app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Map endpoints
 app.MapAuthEndpoints();
@@ -118,6 +122,7 @@ app.MapTenantEndpoints();
 app.MapUserEndpoints();
 app.MapDashboardEndpoints();
 app.MapBillingEndpoints();
+app.MapOnboardingEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
