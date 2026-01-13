@@ -1,0 +1,10 @@
+global using Xunit;
+global using Moq;
+global using FluentAssertions;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using System.Net.Http.Json;
+global using Portal.Api.Data;
+global using Portal.Api.Models;
+global using Portal.Api.Services;
+global using Portal.Api.DTOs;

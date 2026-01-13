@@ -136,3 +136,6 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithTags("Health");
 
 app.Run();
+
+// Needed for WebApplicationFactory in tests
+public partial class Program { }
