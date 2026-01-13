@@ -19,6 +19,9 @@ public class AppDbContext : DbContext
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<OnboardingSurvey> OnboardingSurveys => Set<OnboardingSurvey>();
+    public DbSet<OnboardingSurveyVersion> OnboardingSurveyVersions => Set<OnboardingSurveyVersion>();
+    public DbSet<OnboardingResponse> OnboardingResponses => Set<OnboardingResponse>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,10 +108,58 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
+        // OnboardingSurvey configuration
+        modelBuilder.Entity<OnboardingSurvey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(200);
+
+            entity.HasOne(e => e.Tenant)
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.ActiveVersion)
+                .WithOne()
+                .HasForeignKey<OnboardingSurvey>(e => e.ActiveVersionId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // OnboardingSurveyVersion configuration
+        modelBuilder.Entity<OnboardingSurveyVersion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.SurveyId, e.VersionNumber }).IsUnique();
+
+            entity.HasOne(e => e.Survey)
+                .WithMany(s => s.Versions)
+                .HasForeignKey(e => e.SurveyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OnboardingResponse configuration
+        modelBuilder.Entity<OnboardingResponse>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.SurveyVersion)
+                .WithMany(v => v.Responses)
+                .HasForeignKey(e => e.SurveyVersionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // Global query filter for multi-tenancy
         modelBuilder.Entity<User>().HasQueryFilter(u => u.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<Invitation>().HasQueryFilter(i => i.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<AuditLog>().HasQueryFilter(a => a.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<RefreshToken>().HasQueryFilter(r => r.User.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<OnboardingSurvey>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<OnboardingSurveyVersion>().HasQueryFilter(v => v.Survey.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<OnboardingResponse>().HasQueryFilter(r => r.SurveyVersion.Survey.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
     }
 }

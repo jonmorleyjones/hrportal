@@ -1,10 +1,13 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { motion, Skeleton, StaggerContainer, StaggerItem } from '@/components/ui/motion';
+import { DataTable, Column } from '@/components/ui/data-table';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Check, CreditCard, Sparkles, Zap, Crown, Building2, Receipt } from 'lucide-react';
+import type { Invoice } from '@/types';
 
 const plans = [
   {
@@ -47,6 +50,113 @@ const plans = [
     ],
   },
 ];
+
+function InvoiceHistoryTable({ invoices, isLoading }: { invoices: Invoice[]; isLoading: boolean }) {
+  const columns: Column<Invoice>[] = useMemo(
+    () => [
+      {
+        key: 'invoiceNumber',
+        header: 'Invoice',
+        sortable: true,
+        render: (invoice) => <span className="font-medium">{invoice.invoiceNumber}</span>,
+      },
+      {
+        key: 'issuedAt',
+        header: 'Date',
+        sortable: true,
+        getValue: (invoice) => new Date(invoice.issuedAt).getTime(),
+        render: (invoice) => (
+          <span className="text-muted-foreground">{formatDate(invoice.issuedAt)}</span>
+        ),
+      },
+      {
+        key: 'amount',
+        header: 'Amount',
+        sortable: true,
+        render: (invoice) => <span className="font-medium">{formatCurrency(invoice.amount)}</span>,
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        sortable: true,
+        render: (invoice) => (
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+              invoice.status === 'paid'
+                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                invoice.status === 'paid' ? 'bg-green-400' : 'bg-yellow-400'
+              }`}
+            />
+            {invoice.status}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      className="glass rounded-xl overflow-hidden"
+    >
+      <div className="p-6 border-b border-border/30">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-accent/10">
+            <Receipt className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Invoice History</h3>
+            <p className="text-sm text-muted-foreground">Your billing history</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {isLoading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-6 w-14 rounded-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <DataTable
+            data={invoices}
+            columns={columns}
+            keyField="id"
+            searchPlaceholder="Search invoices..."
+            filterOptions={{
+              key: 'status',
+              label: 'Status',
+              options: [
+                { label: 'Paid', value: 'paid' },
+                { label: 'Pending', value: 'pending' },
+              ],
+            }}
+            emptyState={
+              <div className="text-center py-4">
+                <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No invoices yet</p>
+              </div>
+            }
+          />
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 export function BillingPage() {
   const { data: subscription, isLoading: subLoading } = useQuery({
@@ -216,88 +326,7 @@ export function BillingPage() {
 
         {/* Invoice History */}
         <StaggerItem>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="glass rounded-xl overflow-hidden"
-          >
-            <div className="p-6 border-b border-border/30">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/10">
-                  <Receipt className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Invoice History</h3>
-                  <p className="text-sm text-muted-foreground">Your billing history</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6">
-              {invLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center justify-between">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-20" />
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-6 w-14 rounded-full" />
-                    </div>
-                  ))}
-                </div>
-              ) : invoicesData?.invoices.length === 0 ? (
-                <div className="text-center py-8">
-                  <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">No invoices yet</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border/50">
-                        <th className="text-left py-3 font-medium text-muted-foreground text-sm">Invoice</th>
-                        <th className="text-left py-3 font-medium text-muted-foreground text-sm">Date</th>
-                        <th className="text-left py-3 font-medium text-muted-foreground text-sm">Amount</th>
-                        <th className="text-left py-3 font-medium text-muted-foreground text-sm">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoicesData?.invoices.map((invoice, index) => (
-                        <motion.tr
-                          key={invoice.id}
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.05 * index }}
-                          className="border-b border-border/30 last:border-0 hover:bg-white/5 transition-colors"
-                        >
-                          <td className="py-4 font-medium">{invoice.invoiceNumber}</td>
-                          <td className="py-4 text-muted-foreground">
-                            {formatDate(invoice.issuedAt)}
-                          </td>
-                          <td className="py-4 font-medium">{formatCurrency(invoice.amount)}</td>
-                          <td className="py-4">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                                invoice.status === 'paid'
-                                  ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                                  : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
-                              }`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                                invoice.status === 'paid' ? 'bg-green-400' : 'bg-yellow-400'
-                              }`} />
-                              {invoice.status}
-                            </span>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </motion.div>
+          <InvoiceHistoryTable invoices={invoicesData?.invoices || []} isLoading={invLoading} />
         </StaggerItem>
       </StaggerContainer>
     </div>

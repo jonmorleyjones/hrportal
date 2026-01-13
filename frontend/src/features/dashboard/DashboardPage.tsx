@@ -6,8 +6,6 @@ import { motion, Skeleton, StaggerContainer, StaggerItem } from '@/components/ui
 import { Users, UserCheck, Mail, TrendingUp, Activity } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,

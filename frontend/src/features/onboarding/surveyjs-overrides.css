@@ -1,0 +1,369 @@
+/* SurveyJS Aurora Glass Theme Overrides */
+
+/* Main survey container */
+.sd-root-modern {
+  background: transparent !important;
+}
+
+.sd-body {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Survey pages with glass effect */
+.sd-page {
+  background: hsl(224 71% 8% / 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(217 33% 30% / 0.3) !important;
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.37),
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.05) !important;
+  border-radius: 0.75rem !important;
+  padding: 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Question panels */
+.sd-panel {
+  background: hsl(224 71% 6% / 0.5) !important;
+  border: 1px solid hsl(217 33% 30% / 0.2) !important;
+  border-radius: 0.75rem !important;
+  padding: 1.5rem !important;
+}
+
+/* Question titles */
+.sd-question__title {
+  color: hsl(213 31% 91%) !important;
+  font-weight: 500 !important;
+  font-size: 1rem !important;
+}
+
+.sd-page__title {
+  color: hsl(213 31% 91%) !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.sd-page__description {
+  color: hsl(215 20% 55%) !important;
+  font-size: 0.875rem !important;
+}
+
+/* Input fields */
+.sd-input {
+  background: hsl(224 71% 6% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.5rem !important;
+  color: hsl(213 31% 91%) !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-input:focus {
+  border-color: hsl(262 83% 58%) !important;
+  box-shadow: 0 0 0 3px hsl(262 83% 58% / 0.15) !important;
+  outline: none !important;
+}
+
+.sd-input::placeholder {
+  color: hsl(215 20% 45%) !important;
+}
+
+/* Dropdown */
+.sd-dropdown {
+  background: hsl(224 71% 6% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.5rem !important;
+}
+
+.sd-dropdown__value {
+  color: hsl(213 31% 91%) !important;
+}
+
+.sd-dropdown__filter-string-input {
+  background: transparent !important;
+  color: hsl(213 31% 91%) !important;
+}
+
+/* Dropdown popup */
+.sd-dropdown__popup {
+  background: hsl(224 71% 8% / 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid hsl(217 33% 30% / 0.3) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.sd-list__item {
+  color: hsl(213 31% 91%) !important;
+  padding: 0.5rem 1rem !important;
+  transition: background 0.15s ease !important;
+}
+
+.sd-list__item:hover {
+  background: hsl(262 83% 58% / 0.1) !important;
+}
+
+.sd-list__item--selected {
+  background: hsl(262 83% 58% / 0.2) !important;
+  color: hsl(262 83% 68%) !important;
+}
+
+/* Checkboxes and radio buttons */
+.sd-selectbase__item {
+  padding: 0.5rem 0 !important;
+}
+
+.sd-item__decorator {
+  border-color: hsl(217 33% 35%) !important;
+  background: hsl(224 71% 6% / 0.5) !important;
+}
+
+.sd-item--checked .sd-item__decorator {
+  background: hsl(262 83% 58%) !important;
+  border-color: hsl(262 83% 58%) !important;
+}
+
+.sd-item__control-label {
+  color: hsl(213 31% 91%) !important;
+}
+
+/* Rating */
+.sd-rating__item {
+  background: hsl(224 71% 8% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  color: hsl(213 31% 91%) !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-rating__item:hover {
+  border-color: hsl(262 83% 58% / 0.5) !important;
+  background: hsl(262 83% 58% / 0.1) !important;
+}
+
+.sd-rating__item--selected {
+  background: hsl(262 83% 58%) !important;
+  border-color: hsl(262 83% 58%) !important;
+  color: white !important;
+}
+
+.sd-rating__min-text,
+.sd-rating__max-text {
+  color: hsl(215 20% 55%) !important;
+  font-size: 0.75rem !important;
+}
+
+/* Boolean (yes/no switch) */
+.sd-boolean__thumb {
+  background: hsl(217 33% 25%) !important;
+}
+
+.sd-boolean--checked .sd-boolean__thumb {
+  background: hsl(262 83% 58%) !important;
+}
+
+.sd-boolean__switch {
+  background: hsl(224 71% 10%) !important;
+  border-color: hsl(217 33% 30% / 0.5) !important;
+}
+
+/* Comment/textarea */
+.sd-comment {
+  background: hsl(224 71% 6% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.5rem !important;
+  color: hsl(213 31% 91%) !important;
+  min-height: 100px !important;
+}
+
+.sd-comment:focus {
+  border-color: hsl(262 83% 58%) !important;
+  box-shadow: 0 0 0 3px hsl(262 83% 58% / 0.15) !important;
+}
+
+/* Navigation buttons */
+.sd-btn {
+  border-radius: 0.5rem !important;
+  font-weight: 500 !important;
+  padding: 0.75rem 1.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-btn--action {
+  background: linear-gradient(135deg, hsl(262 83% 58%), hsl(199 89% 48%)) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.sd-btn--action:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px hsl(262 83% 58% / 0.3) !important;
+}
+
+.sd-btn--navigation {
+  background: hsl(217 33% 17%) !important;
+  border: 1px solid hsl(217 33% 30% / 0.3) !important;
+  color: hsl(213 31% 91%) !important;
+}
+
+.sd-btn--navigation:hover {
+  background: hsl(217 33% 22%) !important;
+}
+
+/* Progress bar */
+.sd-progress {
+  background: hsl(217 33% 12%) !important;
+  border-radius: 9999px !important;
+  height: 6px !important;
+  overflow: hidden !important;
+}
+
+.sd-progress__bar {
+  background: linear-gradient(90deg, hsl(262 83% 58%), hsl(199 89% 48%)) !important;
+  border-radius: 9999px !important;
+  transition: width 0.3s ease !important;
+}
+
+.sd-progress__text {
+  color: hsl(215 20% 55%) !important;
+  font-size: 0.75rem !important;
+}
+
+/* Required asterisk */
+.sd-question__required-text {
+  color: hsl(0 84% 60%) !important;
+}
+
+/* Error messages */
+.sd-question__erbox {
+  color: hsl(0 84% 60%) !important;
+  background: hsl(0 84% 60% / 0.1) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.5rem 0.75rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Complete page */
+.sd-completedpage {
+  text-align: center !important;
+  padding: 3rem !important;
+}
+
+.sd-completedpage h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  color: hsl(213 31% 91%) !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Footer */
+.sd-footer {
+  padding: 1rem 0 !important;
+  margin-top: 1rem !important;
+  border-top: 1px solid hsl(217 33% 30% / 0.2) !important;
+}
+
+/* Matrix questions */
+.sd-matrix {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.sd-matrix__cell {
+  background: hsl(224 71% 8% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.3) !important;
+  padding: 0.75rem !important;
+}
+
+.sd-matrix__cell:first-child {
+  border-radius: 0.5rem 0 0 0.5rem !important;
+}
+
+.sd-matrix__cell:last-child {
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+
+/* Header with logo */
+.sd-header {
+  margin-bottom: 1.5rem !important;
+}
+
+.sd-title {
+  font-weight: 600 !important;
+  font-size: 1.75rem !important;
+  background: linear-gradient(135deg, hsl(262 83% 58%), hsl(199 89% 48%)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+.sd-description {
+  color: hsl(215 20% 55%) !important;
+  font-size: 1rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* File upload */
+.sd-file {
+  background: hsl(224 71% 8% / 0.5) !important;
+  border: 2px dashed hsl(217 33% 30% / 0.5) !important;
+  border-radius: 0.75rem !important;
+  padding: 2rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-file:hover {
+  border-color: hsl(262 83% 58% / 0.5) !important;
+  background: hsl(262 83% 58% / 0.05) !important;
+}
+
+/* Image picker */
+.sd-imagepicker__item {
+  border: 2px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-imagepicker__item:hover {
+  border-color: hsl(262 83% 58% / 0.5) !important;
+}
+
+.sd-imagepicker__item--checked {
+  border-color: hsl(262 83% 58%) !important;
+  box-shadow: 0 0 0 3px hsl(262 83% 58% / 0.2) !important;
+}
+
+/* Signature pad */
+.sd-signaturepad {
+  background: hsl(224 71% 6% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Ranking */
+.sd-ranking-item {
+  background: hsl(224 71% 8% / 0.5) !important;
+  border: 1px solid hsl(217 33% 25% / 0.5) !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  padding: 0.75rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.sd-ranking-item:hover {
+  border-color: hsl(262 83% 58% / 0.5) !important;
+}
+
+.sd-ranking-item__icon {
+  color: hsl(215 20% 55%) !important;
+}
+
+/* Hide powered by surveyjs */
+.sd-body__footer .sd-footer__completed-page-link,
+.sd-footer__logo {
+  display: none !important;
+}

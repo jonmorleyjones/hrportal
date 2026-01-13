@@ -9,10 +9,12 @@ import {
   CreditCard,
   Building2,
   Sparkles,
+  ClipboardList,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/onboarding', label: 'Onboarding', icon: ClipboardList },
   { to: '/users', label: 'Users', icon: Users },
   { to: '/settings', label: 'Settings', icon: Settings },
   { to: '/settings/billing', label: 'Billing', icon: CreditCard },

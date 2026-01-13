@@ -101,6 +101,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Ensure database is created and seeded
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
+
 // Configure pipeline
 if (app.Environment.IsDevelopment())
 {

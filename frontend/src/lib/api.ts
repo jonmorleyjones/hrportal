@@ -200,6 +200,12 @@ class ApiClient {
     });
   }
 
+  async resetOnboardingResponse(): Promise<void> {
+    await this.request('/api/onboarding/response', {
+      method: 'DELETE',
+    });
+  }
+
   // Onboarding Admin
   async getOnboardingSurveyAdmin(): Promise<OnboardingSurvey> {
     return this.request<OnboardingSurvey>('/api/onboarding/admin/survey');

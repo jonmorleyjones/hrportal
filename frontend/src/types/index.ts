@@ -88,3 +88,29 @@ export interface Invoice {
   issuedAt: string;
   paidAt: string | null;
 }
+
+export interface OnboardingSurvey {
+  id: string;
+  name: string;
+  currentVersionNumber: number;
+  surveyJson: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingResponse {
+  id: string;
+  userId: string;
+  userName: string;
+  versionNumber: number;
+  responseJson: string;
+  isComplete: boolean;
+  startedAt: string;
+  completedAt: string | null;
+}
+
+export interface OnboardingStatus {
+  hasSurvey: boolean;
+  survey: OnboardingSurvey | null;
+}

@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence, Skeleton, StaggerContainer, StaggerItem } from '@/components/ui/motion';
+import { motion, AnimatePresence, Skeleton } from '@/components/ui/motion';
 import { Plus, MoreHorizontal, UserMinus, Shield, Mail, X, Send, UserCircle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import type { UserRole } from '@/types';

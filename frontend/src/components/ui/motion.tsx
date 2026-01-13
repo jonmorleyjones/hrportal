@@ -1,4 +1,4 @@
-import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { motion, AnimatePresence, type Variants, type Transition } from 'framer-motion';
 import { type ReactNode } from 'react';
 
 // Animation variants
@@ -55,26 +55,26 @@ export const staggerItem: Variants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.4, 0, 0.2, 1],
+      ease: [0.4, 0, 0.2, 1] as const,
     },
   },
 };
 
 // Transition presets
-export const springTransition = {
+export const springTransition: Transition = {
   type: 'spring',
   stiffness: 300,
   damping: 30,
 };
 
-export const smoothTransition = {
+export const smoothTransition: Transition = {
   duration: 0.4,
-  ease: [0.4, 0, 0.2, 1],
+  ease: [0.4, 0, 0.2, 1] as const,
 };
 
-export const fastTransition = {
+export const fastTransition: Transition = {
   duration: 0.2,
-  ease: [0.4, 0, 0.2, 1],
+  ease: [0.4, 0, 0.2, 1] as const,
 };
 
 // Page transition wrapper
@@ -155,9 +155,9 @@ export function HoverCard({ children, className }: HoverCardProps) {
       whileHover={{
         y: -4,
         scale: 1.02,
-        transition: fastTransition,
       }}
       whileTap={{ scale: 0.98 }}
+      transition={fastTransition}
       className={className}
     >
       {children}
@@ -311,21 +311,21 @@ interface GlassCardProps {
 }
 
 export function GlassCard({ children, className, hover = true }: GlassCardProps) {
-  const Component = hover ? motion.div : 'div';
+  if (!hover) {
+    return <div className={`glass rounded-xl ${className}`}>{children}</div>;
+  }
 
   return (
-    <Component
+    <motion.div
       className={`glass rounded-xl ${className}`}
-      {...(hover && {
-        whileHover: {
-          y: -2,
-          boxShadow: '0 20px 40px 0 rgba(0, 0, 0, 0.4)',
-        },
-        transition: fastTransition,
-      })}
+      whileHover={{
+        y: -2,
+        boxShadow: '0 20px 40px 0 rgba(0, 0, 0, 0.4)',
+      }}
+      transition={fastTransition}
     >
       {children}
-    </Component>
+    </motion.div>
   );
 }
 

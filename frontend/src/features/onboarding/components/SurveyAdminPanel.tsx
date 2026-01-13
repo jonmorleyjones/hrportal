@@ -22,30 +22,45 @@ import { formatDate } from '@/lib/utils';
 import type { OnboardingResponse } from '@/types';
 
 const defaultSurveyJson = {
-  title: 'Onboarding Survey',
-  description: 'Please complete this short survey to help us personalize your experience.',
+  title: 'New Starter Form',
+  description: 'Submit details for a new employee.',
   pages: [
     {
       name: 'page1',
-      title: 'About You',
+      title: 'New Starter Details',
       elements: [
         {
           type: 'text',
-          name: 'role',
-          title: 'What is your role?',
+          name: 'fullName',
+          title: 'Full Name',
           isRequired: true,
         },
         {
+          type: 'text',
+          name: 'email',
+          title: 'Work Email',
+          isRequired: true,
+          inputType: 'email',
+        },
+        {
           type: 'dropdown',
-          name: 'teamSize',
-          title: 'What is your team size?',
-          choices: ['1-5', '6-20', '21-50', '51-200', '200+'],
+          name: 'department',
+          title: 'Department',
+          isRequired: true,
+          choices: ['Engineering', 'Sales', 'Marketing', 'Operations', 'HR', 'Finance', 'Other'],
+        },
+        {
+          type: 'text',
+          name: 'startDate',
+          title: 'Start Date',
+          isRequired: true,
+          inputType: 'date',
         },
       ],
     },
   ],
   showProgressBar: 'top',
-  completeText: 'Complete',
+  completeText: 'Submit',
   showQuestionNumbers: 'off',
 };
 
@@ -68,8 +83,8 @@ export function SurveyAdminPanel() {
       setSurveyJson(survey.surveyJson);
       setIsActive(survey.isActive);
     } else if (!surveyLoading && surveyError) {
-      // No survey exists, use default
-      setName('Onboarding Survey');
+      // No form exists, use default
+      setName('New Starter Form');
       setSurveyJson(JSON.stringify(defaultSurveyJson, null, 2));
     }
   });
@@ -85,7 +100,7 @@ export function SurveyAdminPanel() {
       }
       setIsActive(survey.isActive);
     } else if (!surveyLoading && surveyError) {
-      setName('Onboarding Survey');
+      setName('New Starter Form');
       setSurveyJson(JSON.stringify(defaultSurveyJson, null, 2));
     }
   }, [survey, surveyLoading, surveyError]);
@@ -115,13 +130,10 @@ export function SurveyAdminPanel() {
     }
   };
 
-  const completedCount = responses?.filter((r) => r.isComplete).length || 0;
-  const inProgressCount = responses?.filter((r) => !r.isComplete).length || 0;
-
   const responseColumns: Column<OnboardingResponse>[] = [
     {
       key: 'userName',
-      header: 'User',
+      header: 'Submitted By',
       sortable: true,
       render: (item) => (
         <div className="flex items-center gap-3">
@@ -141,24 +153,24 @@ export function SurveyAdminPanel() {
       ),
     },
     {
+      key: 'versionNumber',
+      header: 'Version',
+      sortable: true,
+      render: (item) => (
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-muted">
+          v{item.versionNumber}
+        </span>
+      ),
+      getValue: (item) => item.versionNumber,
+    },
+    {
       key: 'startedAt',
-      header: 'Started',
+      header: 'Submitted',
       sortable: true,
       render: (item) => (
         <span className="text-muted-foreground">{formatDate(item.startedAt)}</span>
       ),
       getValue: (item) => new Date(item.startedAt).getTime(),
-    },
-    {
-      key: 'completedAt',
-      header: 'Completed',
-      sortable: true,
-      render: (item) => (
-        <span className="text-muted-foreground">
-          {item.completedAt ? formatDate(item.completedAt) : '—'}
-        </span>
-      ),
-      getValue: (item) => item.completedAt ? new Date(item.completedAt).getTime() : 0,
     },
     {
       key: 'isComplete',
@@ -202,38 +214,45 @@ export function SurveyAdminPanel() {
         className="glass rounded-xl overflow-hidden"
       >
         <div className="p-6 border-b border-border/30">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
-              <FileJson className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
+                <FileJson className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Form Configuration</h3>
+                <p className="text-sm text-muted-foreground">
+                  Edit the form JSON to customize fields
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold">Survey Configuration</h3>
-              <p className="text-sm text-muted-foreground">
-                Edit the survey JSON to customize questions
-              </p>
-            </div>
+            {survey && (
+              <span className="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-muted">
+                Version {survey.currentVersionNumber}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="p-6 space-y-4">
-          {/* Survey Name */}
+          {/* Form Name */}
           <div>
-            <label className="block text-sm font-medium mb-2">Survey Name</label>
+            <label className="block text-sm font-medium mb-2">Form Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-background/50 border border-border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="Enter survey name..."
+              placeholder="Enter form name..."
             />
           </div>
 
           {/* Active Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <label className="block text-sm font-medium">Survey Active</label>
+              <label className="block text-sm font-medium">Form Active</label>
               <p className="text-sm text-muted-foreground">
-                When disabled, users won't see the survey
+                When disabled, users won't see the form
               </p>
             </div>
             <button
@@ -252,7 +271,7 @@ export function SurveyAdminPanel() {
 
           {/* JSON Editor */}
           <div>
-            <label className="block text-sm font-medium mb-2">Survey JSON (SurveyJS format)</label>
+            <label className="block text-sm font-medium mb-2">Form JSON (SurveyJS format)</label>
             <textarea
               value={surveyJson}
               onChange={(e) => {
@@ -303,11 +322,11 @@ export function SurveyAdminPanel() {
               <Users className="h-5 w-5 text-accent" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold">Survey Responses</h3>
+              <h3 className="font-semibold">New Starter Submissions</h3>
               <p className="text-sm text-muted-foreground">
                 {responsesLoading
                   ? 'Loading...'
-                  : `${completedCount} completed, ${inProgressCount} in progress`}
+                  : `${responses?.length || 0} submissions`}
               </p>
             </div>
           </div>
@@ -343,7 +362,7 @@ export function SurveyAdminPanel() {
                 emptyState={
                   <div className="text-center py-8">
                     <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-muted-foreground">No responses yet</p>
+                    <p className="text-muted-foreground">No submissions yet</p>
                   </div>
                 }
               />
