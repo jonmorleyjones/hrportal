@@ -8,10 +8,27 @@ import type {
   ChartDataPoint,
   Subscription,
   Invoice,
-  UserRole
+  UserRole,
+  OnboardingStatus,
+  OnboardingSurvey,
+  OnboardingResponse
 } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// Map numeric role values from backend enum to string
+const roleMap: Record<number, UserRole> = {
+  0: 'Viewer',
+  1: 'Member',
+  2: 'Admin',
+};
+
+function mapUserRole(user: User & { role: number | UserRole }): User {
+  return {
+    ...user,
+    role: typeof user.role === 'number' ? roleMap[user.role] || 'Viewer' : user.role,
+  };
+}
 
 class ApiClient {
   private accessToken: string | null = null;
@@ -57,10 +74,15 @@ class ApiClient {
 
   // Auth
   async login(data: LoginRequest): Promise<LoginResponse> {
-    return this.request<LoginResponse>('/api/auth/login', {
+    const response = await this.request<LoginResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // Map numeric role to string
+    return {
+      ...response,
+      user: mapUserRole(response.user as User & { role: number | UserRole }),
+    };
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
@@ -156,6 +178,49 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ newTier }),
     });
+  }
+
+  // Onboarding
+  async getOnboardingStatus(): Promise<OnboardingStatus> {
+    return this.request<OnboardingStatus>('/api/onboarding/status');
+  }
+
+  async getOnboardingSurvey(): Promise<OnboardingSurvey> {
+    return this.request<OnboardingSurvey>('/api/onboarding/survey');
+  }
+
+  async getOnboardingResponse(): Promise<OnboardingResponse> {
+    return this.request<OnboardingResponse>('/api/onboarding/response');
+  }
+
+  async submitOnboardingResponse(responseJson: string, isComplete: boolean): Promise<void> {
+    await this.request('/api/onboarding/response', {
+      method: 'POST',
+      body: JSON.stringify({ responseJson, isComplete }),
+    });
+  }
+
+  // Onboarding Admin
+  async getOnboardingSurveyAdmin(): Promise<OnboardingSurvey> {
+    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey');
+  }
+
+  async createOnboardingSurvey(name: string, surveyJson: string): Promise<OnboardingSurvey> {
+    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey', {
+      method: 'POST',
+      body: JSON.stringify({ name, surveyJson }),
+    });
+  }
+
+  async updateOnboardingSurvey(name: string, surveyJson: string, isActive: boolean): Promise<OnboardingSurvey> {
+    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey', {
+      method: 'PUT',
+      body: JSON.stringify({ name, surveyJson, isActive }),
+    });
+  }
+
+  async getOnboardingResponses(): Promise<OnboardingResponse[]> {
+    return this.request<OnboardingResponse[]>('/api/onboarding/admin/responses');
   }
 }
 
