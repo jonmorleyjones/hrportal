@@ -89,18 +89,31 @@ export interface Invoice {
   paidAt: string | null;
 }
 
-export interface OnboardingSurvey {
+// Request Types (formerly Onboarding)
+export interface RequestTypeCard {
   id: string;
   name: string;
+  description: string | null;
+  icon: string;
+  isActive: boolean;
+}
+
+export interface RequestType {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
   currentVersionNumber: number;
-  surveyJson: string;
+  formJson: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface OnboardingResponse {
+export interface RequestResponse {
   id: string;
+  requestTypeId: string;
+  requestTypeName: string;
   userId: string;
   userName: string;
   versionNumber: number;
@@ -110,7 +123,35 @@ export interface OnboardingResponse {
   completedAt: string | null;
 }
 
-export interface OnboardingStatus {
-  hasSurvey: boolean;
-  survey: OnboardingSurvey | null;
+export interface CreateRequestTypeRequest {
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  formJson: string;
+}
+
+export interface UpdateRequestTypeRequest {
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  formJson: string;
+  isActive: boolean;
+}
+
+// File Upload
+export interface FileUploadResponse {
+  id: string;
+  originalFileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  downloadUrl: string;
+}
+
+export interface FileInfo {
+  id: string;
+  originalFileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  downloadUrl: string;
+  uploadedAt: string;
 }

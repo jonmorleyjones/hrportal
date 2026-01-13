@@ -19,9 +19,10 @@ public class AppDbContext : DbContext
     public DbSet<Invitation> Invitations => Set<Invitation>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-    public DbSet<OnboardingSurvey> OnboardingSurveys => Set<OnboardingSurvey>();
-    public DbSet<OnboardingSurveyVersion> OnboardingSurveyVersions => Set<OnboardingSurveyVersion>();
-    public DbSet<OnboardingResponse> OnboardingResponses => Set<OnboardingResponse>();
+    public DbSet<RequestType> RequestTypes => Set<RequestType>();
+    public DbSet<RequestTypeVersion> RequestTypeVersions => Set<RequestTypeVersion>();
+    public DbSet<RequestResponse> RequestResponses => Set<RequestResponse>();
+    public DbSet<UploadedFile> UploadedFiles => Set<UploadedFile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -108,11 +109,13 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // OnboardingSurvey configuration
-        modelBuilder.Entity<OnboardingSurvey>(entity =>
+        // RequestType configuration
+        modelBuilder.Entity<RequestType>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.Icon).HasMaxLength(50).HasDefaultValue("clipboard-list");
 
             entity.HasOne(e => e.Tenant)
                 .WithMany()
@@ -121,30 +124,30 @@ public class AppDbContext : DbContext
 
             entity.HasOne(e => e.ActiveVersion)
                 .WithOne()
-                .HasForeignKey<OnboardingSurvey>(e => e.ActiveVersionId)
+                .HasForeignKey<RequestType>(e => e.ActiveVersionId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // OnboardingSurveyVersion configuration
-        modelBuilder.Entity<OnboardingSurveyVersion>(entity =>
+        // RequestTypeVersion configuration
+        modelBuilder.Entity<RequestTypeVersion>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.HasIndex(e => new { e.SurveyId, e.VersionNumber }).IsUnique();
+            entity.HasIndex(e => new { e.RequestTypeId, e.VersionNumber }).IsUnique();
 
-            entity.HasOne(e => e.Survey)
+            entity.HasOne(e => e.RequestType)
                 .WithMany(s => s.Versions)
-                .HasForeignKey(e => e.SurveyId)
+                .HasForeignKey(e => e.RequestTypeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // OnboardingResponse configuration
-        modelBuilder.Entity<OnboardingResponse>(entity =>
+        // RequestResponse configuration
+        modelBuilder.Entity<RequestResponse>(entity =>
         {
             entity.HasKey(e => e.Id);
 
-            entity.HasOne(e => e.SurveyVersion)
+            entity.HasOne(e => e.RequestTypeVersion)
                 .WithMany(v => v.Responses)
-                .HasForeignKey(e => e.SurveyVersionId)
+                .HasForeignKey(e => e.RequestTypeVersionId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.User)
@@ -153,13 +156,43 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // UploadedFile configuration
+        modelBuilder.Entity<UploadedFile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.QuestionName).HasMaxLength(200);
+            entity.Property(e => e.OriginalFileName).HasMaxLength(500);
+            entity.Property(e => e.StoredFileName).HasMaxLength(100);
+            entity.Property(e => e.ContentType).HasMaxLength(100);
+            entity.Property(e => e.StoragePath).HasMaxLength(500);
+
+            entity.HasOne(e => e.Tenant)
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.RequestResponse)
+                .WithMany()
+                .HasForeignKey(e => e.RequestResponseId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => new { e.UploadedAt, e.RequestResponseId })
+                .HasFilter("\"RequestResponseId\" IS NULL");
+        });
+
         // Global query filter for multi-tenancy
         modelBuilder.Entity<User>().HasQueryFilter(u => u.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<Invitation>().HasQueryFilter(i => i.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<AuditLog>().HasQueryFilter(a => a.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<RefreshToken>().HasQueryFilter(r => r.User.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
-        modelBuilder.Entity<OnboardingSurvey>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
-        modelBuilder.Entity<OnboardingSurveyVersion>().HasQueryFilter(v => v.Survey.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
-        modelBuilder.Entity<OnboardingResponse>().HasQueryFilter(r => r.SurveyVersion.Survey.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<RequestType>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<RequestTypeVersion>().HasQueryFilter(v => v.RequestType.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<RequestResponse>().HasQueryFilter(r => r.RequestTypeVersion.RequestType.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        modelBuilder.Entity<UploadedFile>().HasQueryFilter(f => f.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
     }
 }

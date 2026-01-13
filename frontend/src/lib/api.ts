@@ -9,9 +9,13 @@ import type {
   Subscription,
   Invoice,
   UserRole,
-  OnboardingStatus,
-  OnboardingSurvey,
-  OnboardingResponse
+  RequestTypeCard,
+  RequestType,
+  RequestResponse,
+  CreateRequestTypeRequest,
+  UpdateRequestTypeRequest,
+  FileUploadResponse,
+  FileInfo
 } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -180,53 +184,106 @@ class ApiClient {
     });
   }
 
-  // Onboarding
-  async getOnboardingStatus(): Promise<OnboardingStatus> {
-    return this.request<OnboardingStatus>('/api/onboarding/status');
+  // Request Types (User endpoints)
+  async getRequestTypes(): Promise<RequestTypeCard[]> {
+    return this.request<RequestTypeCard[]>('/api/requests/types');
   }
 
-  async getOnboardingSurvey(): Promise<OnboardingSurvey> {
-    return this.request<OnboardingSurvey>('/api/onboarding/survey');
+  async getRequestType(id: string): Promise<RequestType> {
+    return this.request<RequestType>(`/api/requests/types/${id}`);
   }
 
-  async getOnboardingResponse(): Promise<OnboardingResponse> {
-    return this.request<OnboardingResponse>('/api/onboarding/response');
-  }
-
-  async submitOnboardingResponse(responseJson: string, isComplete: boolean): Promise<void> {
-    await this.request('/api/onboarding/response', {
+  async submitRequestResponse(requestTypeId: string, responseJson: string, isComplete: boolean): Promise<{ message: string; id: string }> {
+    return this.request(`/api/requests/types/${requestTypeId}/responses`, {
       method: 'POST',
       body: JSON.stringify({ responseJson, isComplete }),
     });
   }
 
-  async resetOnboardingResponse(): Promise<void> {
-    await this.request('/api/onboarding/response', {
+  async getUserRequestResponses(): Promise<RequestResponse[]> {
+    return this.request<RequestResponse[]>('/api/requests/responses');
+  }
+
+  // Request Types Admin
+  async getRequestTypesAdmin(): Promise<RequestType[]> {
+    return this.request<RequestType[]>('/api/requests/admin/types');
+  }
+
+  async createRequestType(data: CreateRequestTypeRequest): Promise<RequestType> {
+    return this.request<RequestType>('/api/requests/admin/types', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRequestType(id: string, data: UpdateRequestTypeRequest): Promise<RequestType> {
+    return this.request<RequestType>(`/api/requests/admin/types/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRequestType(id: string): Promise<void> {
+    await this.request(`/api/requests/admin/types/${id}`, {
       method: 'DELETE',
     });
   }
 
-  // Onboarding Admin
-  async getOnboardingSurveyAdmin(): Promise<OnboardingSurvey> {
-    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey');
+  async getRequestTypeResponses(requestTypeId: string): Promise<RequestResponse[]> {
+    return this.request<RequestResponse[]>(`/api/requests/admin/types/${requestTypeId}/responses`);
   }
 
-  async createOnboardingSurvey(name: string, surveyJson: string): Promise<OnboardingSurvey> {
-    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey', {
+  async getAllRequestResponses(): Promise<RequestResponse[]> {
+    return this.request<RequestResponse[]>('/api/requests/admin/responses');
+  }
+
+  // File Upload
+  async uploadFile(file: File, questionName: string): Promise<FileUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const headers: HeadersInit = {};
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+    if (this.tenantSlug) {
+      headers['X-Tenant-ID'] = this.tenantSlug;
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/files/upload?questionName=${encodeURIComponent(questionName)}`,
+      {
+        method: 'POST',
+        headers,
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || 'Upload failed');
+    }
+
+    return response.json();
+  }
+
+  async deleteFile(fileId: string): Promise<void> {
+    await this.request(`/api/files/${fileId}`, { method: 'DELETE' });
+  }
+
+  async linkFilesToResponse(requestResponseId: string, fileIds: string[]): Promise<void> {
+    await this.request('/api/files/link', {
       method: 'POST',
-      body: JSON.stringify({ name, surveyJson }),
+      body: JSON.stringify({ requestResponseId, fileIds }),
     });
   }
 
-  async updateOnboardingSurvey(name: string, surveyJson: string, isActive: boolean): Promise<OnboardingSurvey> {
-    return this.request<OnboardingSurvey>('/api/onboarding/admin/survey', {
-      method: 'PUT',
-      body: JSON.stringify({ name, surveyJson, isActive }),
-    });
+  getFileDownloadUrl(fileId: string): string {
+    return `${API_URL}/api/files/${fileId}`;
   }
 
-  async getOnboardingResponses(): Promise<OnboardingResponse[]> {
-    return this.request<OnboardingResponse[]>('/api/onboarding/admin/responses');
+  async getResponseFiles(responseId: string): Promise<FileInfo[]> {
+    return this.request<FileInfo[]>(`/api/files/admin/response/${responseId}`);
   }
 }
 

@@ -10,11 +10,13 @@ import {
   Building2,
   Sparkles,
   ClipboardList,
+  CheckCircle2,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/onboarding', label: 'Onboarding', icon: ClipboardList },
+  { to: '/requests', label: 'Requests', icon: ClipboardList },
+  { to: '/requests/completed', label: 'Completed Requests', icon: CheckCircle2 },
   { to: '/users', label: 'Users', icon: Users },
   { to: '/settings', label: 'Settings', icon: Settings },
   { to: '/settings/billing', label: 'Billing', icon: CreditCard },

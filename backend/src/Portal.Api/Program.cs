@@ -51,6 +51,17 @@ builder.Services.AddScoped<ITenantContext, TenantContext>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// File storage
+builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddHostedService<OrphanFileCleanupService>();
+
+// Configure Kestrel for larger file uploads (30 MB to allow buffer above 25 MB limit)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 30 * 1024 * 1024;
+});
+
 // Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("JWT Secret not configured");
@@ -129,7 +140,8 @@ app.MapTenantEndpoints();
 app.MapUserEndpoints();
 app.MapDashboardEndpoints();
 app.MapBillingEndpoints();
-app.MapOnboardingEndpoints();
+app.MapRequestEndpoints();
+app.MapFileEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))

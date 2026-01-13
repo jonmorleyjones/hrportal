@@ -8,7 +8,9 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage';
 import { UsersPage } from '@/features/users/UsersPage';
 import { SettingsPage } from '@/features/settings/SettingsPage';
 import { BillingPage } from '@/features/billing/BillingPage';
-import { OnboardingPage } from '@/features/onboarding/OnboardingPage';
+import { RequestsPage } from '@/features/requests/RequestsPage';
+import { RequestFormPage } from '@/features/requests/RequestFormPage';
+import { CompletedRequestsPage } from '@/features/requests/CompletedRequestsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,7 +27,9 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<AppShell />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/requests" element={<RequestsPage />} />
+        <Route path="/requests/completed" element={<CompletedRequestsPage />} />
+        <Route path="/requests/:typeId" element={<RequestFormPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/billing" element={<BillingPage />} />
