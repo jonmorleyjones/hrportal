@@ -19,15 +19,19 @@ export interface Tenant {
 }
 
 export interface TenantSettings {
-  enableNotifications: boolean;
-  timezone: string;
-  language: string;
+  enableNotifications?: boolean;
+  timezone?: string;
+  language?: string;
+  contactEmail?: string;
+  supportPhone?: string;
+  address?: string;
 }
 
 export interface TenantBranding {
-  logoUrl: string | null;
-  primaryColor: string;
-  secondaryColor: string;
+  logoUrl?: string | null;
+  primaryColor?: string;
+  secondaryColor?: string;
+  customCss?: string;
 }
 
 export interface LoginRequest {
@@ -189,6 +193,13 @@ export interface TenantPermissions {
   canViewResponses: boolean;
 }
 
+export interface TenantDetailStats {
+  userCount: number;
+  activeRequestTypes: number;
+  totalResponses: number;
+  pendingResponses: number;
+}
+
 export interface TenantDetail {
   id: string;
   slug: string;
@@ -203,6 +214,7 @@ export interface TenantDetail {
   createdAt: string;
   isActive: boolean;
   permissions: TenantPermissions;
+  stats?: TenantDetailStats;
 }
 
 export interface ConsultantLoginRequest {
@@ -231,6 +243,12 @@ export interface CrossTenantRequest {
   isComplete: boolean;
   startedAt: string;
   completedAt: string | null;
+  // For display purposes
+  status?: 'Pending' | 'Approved' | 'Rejected' | 'InProgress';
+  submittedByName?: string;
+  submittedByEmail?: string;
+  submittedAt?: string;
+  reviewedAt?: string | null;
 }
 
 export interface ConsultantRequestType {
@@ -244,6 +262,10 @@ export interface ConsultantRequestType {
   completedResponses: number;
   createdAt: string;
   updatedAt: string;
+  category?: string;
+  version?: number;
+  fieldCount?: number;
+  responseCount?: number;
 }
 
 export interface ConsultantDashboardStats {
@@ -253,6 +275,10 @@ export interface ConsultantDashboardStats {
   totalResponses: number;
   pendingResponses: number;
   completedResponsesThisWeek: number;
+  // Aliases for UI
+  totalActiveRequestTypes?: number;
+  totalPendingResponses?: number;
+  completedThisMonth?: number;
 }
 
 export interface UpdateRequestTypeStatusRequest {
