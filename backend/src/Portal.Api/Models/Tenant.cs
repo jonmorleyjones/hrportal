@@ -14,4 +14,5 @@ public class Tenant
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<Invitation> Invitations { get; set; } = new List<Invitation>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<HrConsultantTenantAssignment> ConsultantAssignments { get; set; } = new List<HrConsultantTenantAssignment>();
 }
