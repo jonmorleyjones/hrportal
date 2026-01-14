@@ -114,6 +114,7 @@ export interface RequestResponse {
   id: string;
   requestTypeId: string;
   requestTypeName: string;
+  requestTypeIcon: string;
   userId: string;
   userName: string;
   versionNumber: number;

@@ -16,6 +16,17 @@ import {
   File,
   Paperclip,
   ClipboardList,
+  UserPlus,
+  Laptop,
+  Calendar,
+  Send,
+  HelpCircle,
+  Settings,
+  Briefcase,
+  Package,
+  CreditCard,
+  Phone,
+  type LucideIcon,
 } from 'lucide-react';
 import { formatDate, formatBytes } from '@/lib/utils';
 import type { RequestResponse, FileInfo } from '@/types';
@@ -30,6 +41,26 @@ function getFileIcon(contentType: string) {
     return FileText;
   }
   return File;
+}
+
+// Map icon string names to Lucide components
+const iconMap: Record<string, LucideIcon> = {
+  'clipboard-list': ClipboardList,
+  'user-plus': UserPlus,
+  'laptop': Laptop,
+  'calendar': Calendar,
+  'file-text': FileText,
+  'send': Send,
+  'help-circle': HelpCircle,
+  'settings': Settings,
+  'briefcase': Briefcase,
+  'package': Package,
+  'credit-card': CreditCard,
+  'phone': Phone,
+};
+
+function getRequestTypeIcon(iconName: string): LucideIcon {
+  return iconMap[iconName] || ClipboardList;
 }
 
 function ResponseDetailPanel({
@@ -186,14 +217,17 @@ export function CompletedRequestsPage() {
       key: 'requestTypeName',
       header: 'Request Type',
       sortable: true,
-      render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
-            <ClipboardList className="h-4 w-4 text-primary" />
+      render: (item) => {
+        const IconComponent = getRequestTypeIcon(item.requestTypeIcon);
+        return (
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
+              <IconComponent className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-medium">{item.requestTypeName}</span>
           </div>
-          <span className="font-medium">{item.requestTypeName}</span>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'versionNumber',
@@ -207,7 +241,7 @@ export function CompletedRequestsPage() {
     },
     {
       key: 'completedAt',
-      header: 'Completed',
+      header: 'Submitted',
       sortable: true,
       render: (item) => (
         <span className="text-muted-foreground">
@@ -233,10 +267,10 @@ export function CompletedRequestsPage() {
           ) : (
             <Clock className="h-3 w-3" />
           )}
-          {item.isComplete ? 'Completed' : 'In Progress'}
+          {item.isComplete ? 'Submitted' : 'In Progress'}
         </span>
       ),
-      getValue: (item) => (item.isComplete ? 'Completed' : 'In Progress'),
+      getValue: (item) => (item.isComplete ? 'Submitted' : 'In Progress'),
     },
     {
       key: 'actions',

@@ -27,6 +27,7 @@ public record RequestResponseDto(
     Guid Id,
     Guid RequestTypeId,
     string RequestTypeName,
+    string RequestTypeIcon,
     Guid UserId,
     string UserName,
     int VersionNumber,
