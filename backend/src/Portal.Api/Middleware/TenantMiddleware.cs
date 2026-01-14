@@ -18,6 +18,7 @@ public class TenantMiddleware
         // Skip tenant resolution for certain paths
         var path = context.Request.Path.Value?.ToLower() ?? "";
         if (path.StartsWith("/api/tenants/resolve") ||
+            path.StartsWith("/api/auth/hr-login") ||
             path.StartsWith("/swagger") ||
             path.StartsWith("/health"))
         {

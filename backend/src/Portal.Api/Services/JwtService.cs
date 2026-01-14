@@ -10,6 +10,7 @@ namespace Portal.Api.Services;
 public interface IJwtService
 {
     string GenerateAccessToken(User user);
+    string GenerateAccessToken(HrConsultant hrConsultant);
     string GenerateRefreshToken();
     ClaimsPrincipal? ValidateToken(string token);
 }
@@ -40,6 +41,36 @@ public class JwtService : IJwtService
             new Claim("name", user.Name),
             new Claim("role", user.Role.ToString()),
             new Claim("tenant_id", user.TenantId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: issuer,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string GenerateAccessToken(HrConsultant hrConsultant)
+    {
+        var secretKey = _configuration["Jwt:Secret"]
+            ?? throw new InvalidOperationException("JWT Secret not configured");
+        var issuer = _configuration["Jwt:Issuer"] ?? "portal-api";
+        var expiryMinutes = int.Parse(_configuration["Jwt:AccessTokenExpiryMinutes"] ?? "15");
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, hrConsultant.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, hrConsultant.Email),
+            new Claim("name", hrConsultant.Name),
+            new Claim("user_type", "hr_consultant"),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

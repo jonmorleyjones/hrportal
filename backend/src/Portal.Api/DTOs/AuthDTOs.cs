@@ -46,6 +46,28 @@ public record TenantBranding(
 
 public record ResolveTenantRequest(string Slug);
 
+public record HrConsultantLoginRequest(string Email, string Password);
+
+public record HrConsultantLoginResponse(string AccessToken, string RefreshToken, HrConsultantDto HrConsultant, List<AssignedTenantDto> AssignedTenants);
+
+public record HrConsultantDto(
+    Guid Id,
+    string Email,
+    string Name,
+    DateTime? LastLoginAt,
+    bool IsActive
+);
+
+public record AssignedTenantDto(
+    Guid TenantId,
+    string TenantName,
+    string TenantSlug,
+    bool CanManageRequestTypes,
+    bool CanManageSettings,
+    bool CanManageBranding,
+    bool CanViewResponses
+);
+
 public record UpdateTenantSettingsRequest(TenantSettings Settings);
 
 public record UpdateTenantBrandingRequest(TenantBranding Branding);

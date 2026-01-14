@@ -15,7 +15,9 @@ import type {
   CreateRequestTypeRequest,
   UpdateRequestTypeRequest,
   FileUploadResponse,
-  FileInfo
+  FileInfo,
+  HrConsultantLoginRequest,
+  HrConsultantLoginResponse
 } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -100,6 +102,13 @@ class ApiClient {
     await this.request('/api/auth/logout', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async hrConsultantLogin(data: HrConsultantLoginRequest): Promise<HrConsultantLoginResponse> {
+    return this.request<HrConsultantLoginResponse>('/api/auth/hr-login', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 

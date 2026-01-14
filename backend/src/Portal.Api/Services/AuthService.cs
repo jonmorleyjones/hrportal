@@ -8,6 +8,7 @@ namespace Portal.Api.Services;
 public interface IAuthService
 {
     Task<LoginResponse?> LoginAsync(string email, string password, Guid tenantId);
+    Task<HrConsultantLoginResponse?> HrConsultantLoginAsync(string email, string password);
     Task<RefreshResponse?> RefreshTokenAsync(string refreshToken);
     Task<bool> LogoutAsync(string refreshToken);
     string HashPassword(string password);
@@ -60,6 +61,58 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken,
             new UserDto(user.Id, user.Email, user.Name, user.Role, user.LastLoginAt, user.IsActive)
+        );
+    }
+
+    public async Task<HrConsultantLoginResponse?> HrConsultantLoginAsync(string email, string password)
+    {
+        var hrConsultant = await _dbContext.HrConsultants
+            .Include(h => h.TenantAssignments)
+                .ThenInclude(ta => ta.Tenant)
+            .FirstOrDefaultAsync(h => h.Email == email && h.IsActive);
+
+        if (hrConsultant == null || !VerifyPassword(password, hrConsultant.PasswordHash))
+        {
+            return null;
+        }
+
+        // Update last login
+        hrConsultant.LastLoginAt = DateTime.UtcNow;
+
+        // Generate tokens
+        var accessToken = _jwtService.GenerateAccessToken(hrConsultant);
+        var refreshToken = _jwtService.GenerateRefreshToken();
+
+        // Store refresh token
+        var refreshTokenDays = int.Parse(_configuration["Jwt:RefreshTokenExpiryDays"] ?? "7");
+        var tokenEntity = new RefreshToken
+        {
+            HrConsultantId = hrConsultant.Id,
+            Token = refreshToken,
+            ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenDays)
+        };
+        _dbContext.RefreshTokens.Add(tokenEntity);
+
+        await _dbContext.SaveChangesAsync();
+
+        var assignedTenants = hrConsultant.TenantAssignments
+            .Where(ta => ta.IsActive)
+            .Select(ta => new AssignedTenantDto(
+                ta.TenantId,
+                ta.Tenant.Name,
+                ta.Tenant.Slug,
+                ta.CanManageRequestTypes,
+                ta.CanManageSettings,
+                ta.CanManageBranding,
+                ta.CanViewResponses
+            ))
+            .ToList();
+
+        return new HrConsultantLoginResponse(
+            accessToken,
+            refreshToken,
+            new HrConsultantDto(hrConsultant.Id, hrConsultant.Email, hrConsultant.Name, hrConsultant.LastLoginAt, hrConsultant.IsActive),
+            assignedTenants
         );
     }
 

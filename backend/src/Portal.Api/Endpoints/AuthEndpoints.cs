@@ -25,6 +25,22 @@ public static class AuthEndpoints
         .Produces<LoginResponse>(200)
         .Produces(401);
 
+        group.MapPost("/hr-login", async (HrConsultantLoginRequest request, IAuthService authService) =>
+        {
+            var result = await authService.HrConsultantLoginAsync(request.Email, request.Password);
+
+            if (result == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            return Results.Ok(result);
+        })
+        .WithName("HrConsultantLogin")
+        .WithDescription("Authenticate HR Consultant and receive tokens with assigned tenants")
+        .Produces<HrConsultantLoginResponse>(200)
+        .Produces(401);
+
         group.MapPost("/refresh", async (RefreshRequest request, IAuthService authService) =>
         {
             var result = await authService.RefreshTokenAsync(request.RefreshToken);

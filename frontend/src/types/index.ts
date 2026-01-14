@@ -156,3 +156,34 @@ export interface FileInfo {
   downloadUrl: string;
   uploadedAt: string;
 }
+
+// HR Consultant Types
+export interface HrConsultant {
+  id: string;
+  email: string;
+  name: string;
+  lastLoginAt: string | null;
+  isActive: boolean;
+}
+
+export interface AssignedTenant {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  canManageRequestTypes: boolean;
+  canManageSettings: boolean;
+  canManageBranding: boolean;
+  canViewResponses: boolean;
+}
+
+export interface HrConsultantLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface HrConsultantLoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  hrConsultant: HrConsultant;
+  assignedTenants: AssignedTenant[];
+}
