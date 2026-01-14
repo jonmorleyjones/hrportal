@@ -6,12 +6,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { motion, AnimatePresence, Skeleton } from '@/components/ui/motion';
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Menu,
+  MenuItem,
+  Chip,
+  Avatar,
+  Skeleton as MuiSkeleton,
+  Box,
+} from '@mui/material';
+import { motion, AnimatePresence } from '@/components/ui/motion';
 import { Plus, MoreHorizontal, UserMinus, Shield, Mail, X, Send, UserCircle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import type { UserRole } from '@/types';
@@ -141,17 +151,17 @@ export function UsersPage() {
         className="glass rounded-xl overflow-hidden"
       >
         {isLoading ? (
-          <div className="p-6 space-y-4">
+          <Box sx={{ p: 3 }}>
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-3 w-1/3" />
-                </div>
-              </div>
+              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <MuiSkeleton variant="circular" width={40} height={40} />
+                <Box sx={{ flex: 1 }}>
+                  <MuiSkeleton variant="text" width="25%" />
+                  <MuiSkeleton variant="text" width="33%" />
+                </Box>
+              </Box>
             ))}
-          </div>
+          </Box>
         ) : data?.users.length === 0 ? (
           <div className="p-12 text-center">
             <UserCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -166,89 +176,126 @@ export function UsersPage() {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Name</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Email</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Role</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Last Login</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Status</th>
-                  <th className="w-12"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.users.map((user, index) => (
-                  <motion.tr
+          <TableContainer component={Paper} sx={{ boxShadow: 'none', bgcolor: 'transparent' }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Last Login</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                  <TableCell sx={{ width: 48 }}></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {data?.users.map((user) => (
+                  <UserTableRow
                     key={user.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.05 * index }}
-                    className="border-b border-border/30 last:border-0 hover:bg-white/5 transition-colors"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-sm font-medium">
-                          {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-muted-foreground">{user.email}</td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-primary">
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="p-4 text-muted-foreground text-sm">
-                      {user.lastLoginAt
-                        ? formatDateTime(user.lastLoginAt)
-                        : 'Never'}
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
-                          user.isActive
-                            ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                            : 'bg-red-500/10 border border-red-500/20 text-red-400'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          user.isActive ? 'bg-green-400' : 'bg-red-400'
-                        }`} />
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="glass-strong border-border/50">
-                          <DropdownMenuItem className="focus:bg-white/5 cursor-pointer">
-                            <Shield className="h-4 w-4 mr-2" />
-                            Change Role
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive focus:bg-destructive/10 cursor-pointer"
-                            onClick={() => deactivateMutation.mutate(user.id)}
-                          >
-                            <UserMinus className="h-4 w-4 mr-2" />
-                            Deactivate
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </motion.tr>
+                    user={user}
+                    onDeactivate={() => deactivateMutation.mutate(user.id)}
+                  />
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
       </motion.div>
     </div>
+  );
+}
+
+function UserTableRow({
+  user,
+  onDeactivate
+}: {
+  user: { id: string; name: string; email: string; role: string; lastLoginAt?: string | null; isActive: boolean };
+  onDeactivate: () => void;
+}) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <TableRow hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+      <TableCell>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}
+          >
+            {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+          </Avatar>
+          <span className="font-medium">{user.name}</span>
+        </Box>
+      </TableCell>
+      <TableCell sx={{ color: 'text.secondary' }}>{user.email}</TableCell>
+      <TableCell>
+        <Chip
+          label={user.role}
+          size="small"
+          variant="outlined"
+          color="primary"
+        />
+      </TableCell>
+      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+        {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
+      </TableCell>
+      <TableCell>
+        <Chip
+          label={user.isActive ? 'Active' : 'Inactive'}
+          size="small"
+          color={user.isActive ? 'success' : 'error'}
+          variant="outlined"
+          icon={
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                backgroundColor: user.isActive ? '#4caf50' : '#f44336',
+                marginLeft: 8
+              }}
+            />
+          }
+        />
+      </TableCell>
+      <TableCell>
+        <IconButton size="small" onClick={handleClick}>
+          <MoreHorizontal className="h-4 w-4" />
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem onClick={handleClose}>
+            <Shield className="h-4 w-4 mr-2" />
+            Change Role
+          </MenuItem>
+          <MenuItem
+            onClick={() => { onDeactivate(); handleClose(); }}
+            sx={{ color: 'error.main' }}
+          >
+            <UserMinus className="h-4 w-4 mr-2" />
+            Deactivate
+          </MenuItem>
+        </Menu>
+      </TableCell>
+    </TableRow>
   );
 }

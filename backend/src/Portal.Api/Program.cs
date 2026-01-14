@@ -117,6 +117,60 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
+
+    // Seed HR Consultant for development
+    if (app.Environment.IsDevelopment())
+    {
+        var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+        await SeedHrConsultant(db, authService);
+    }
+}
+
+static async Task SeedHrConsultant(AppDbContext db, IAuthService authService)
+{
+    const string testEmail = "hr@test.com";
+
+    // Check if already exists
+    if (await db.HrConsultants.AnyAsync(c => c.Email == testEmail))
+    {
+        return;
+    }
+
+    // Create the HR consultant
+    var consultant = new Portal.Api.Models.HrConsultant
+    {
+        Id = Guid.NewGuid(),
+        Email = testEmail,
+        Name = "Test HR Consultant",
+        PasswordHash = authService.HashPassword("password123"),
+        CreatedAt = DateTime.UtcNow,
+        IsActive = true
+    };
+
+    db.HrConsultants.Add(consultant);
+    await db.SaveChangesAsync();
+
+    // Assign to all existing tenants with full permissions
+    var tenants = await db.Tenants.ToListAsync();
+    foreach (var tenant in tenants)
+    {
+        var assignment = new Portal.Api.Models.HrConsultantTenantAssignment
+        {
+            Id = Guid.NewGuid(),
+            HrConsultantId = consultant.Id,
+            TenantId = tenant.Id,
+            AssignedAt = DateTime.UtcNow,
+            IsActive = true,
+            CanManageRequestTypes = true,
+            CanManageSettings = true,
+            CanManageBranding = true,
+            CanViewResponses = true
+        };
+        db.HrConsultantTenantAssignments.Add(assignment);
+    }
+
+    await db.SaveChangesAsync();
+    Console.WriteLine($"Seeded HR Consultant: {testEmail} / password123");
 }
 
 // Configure pipeline
@@ -142,6 +196,7 @@ app.MapDashboardEndpoints();
 app.MapBillingEndpoints();
 app.MapRequestEndpoints();
 app.MapFileEndpoints();
+app.MapHrConsultantEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))

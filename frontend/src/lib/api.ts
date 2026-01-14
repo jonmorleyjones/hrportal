@@ -294,6 +294,146 @@ class ApiClient {
   async getResponseFiles(responseId: string): Promise<FileInfo[]> {
     return this.request<FileInfo[]>(`/api/files/admin/response/${responseId}`);
   }
+
+  // HR Consultant endpoints
+  async getHrDashboardStats(): Promise<HrDashboardStats> {
+    return this.request<HrDashboardStats>('/api/hr/dashboard/stats');
+  }
+
+  async getHrTenantStats(tenantId: string): Promise<HrTenantStats> {
+    return this.request<HrTenantStats>(`/api/hr/tenants/${tenantId}/stats`);
+  }
+
+  async getHrTenantResponses(
+    tenantId: string,
+    page = 1,
+    pageSize = 20,
+    isComplete?: boolean
+  ): Promise<HrResponsesListResponse> {
+    let url = `/api/hr/tenants/${tenantId}/responses?page=${page}&pageSize=${pageSize}`;
+    if (isComplete !== undefined) {
+      url += `&isComplete=${isComplete}`;
+    }
+    return this.request<HrResponsesListResponse>(url);
+  }
+
+  async getHrTenantRequestTypes(tenantId: string): Promise<HrRequestTypeDto[]> {
+    return this.request<HrRequestTypeDto[]>(`/api/hr/tenants/${tenantId}/request-types`);
+  }
+
+  async getHrTenantRequestTypeDetail(tenantId: string, requestTypeId: string): Promise<HrRequestTypeDetailDto> {
+    return this.request<HrRequestTypeDetailDto>(`/api/hr/tenants/${tenantId}/request-types/${requestTypeId}`);
+  }
+
+  async updateHrTenantRequestType(
+    tenantId: string,
+    requestTypeId: string,
+    data: HrUpdateRequestTypeRequest
+  ): Promise<HrRequestTypeDetailDto> {
+    return this.request<HrRequestTypeDetailDto>(`/api/hr/tenants/${tenantId}/request-types/${requestTypeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getHrTenantResponseDetail(tenantId: string, responseId: string): Promise<HrResponseDetailDto> {
+    return this.request<HrResponseDetailDto>(`/api/hr/tenants/${tenantId}/responses/${responseId}`);
+  }
+}
+
+// HR Consultant specific types
+export interface HrDashboardStats {
+  totalTenants: number;
+  totalResponses: number;
+  pendingReview: number;
+  completionRate: number;
+}
+
+export interface HrTenantStats {
+  totalUsers: number;
+  totalResponses: number;
+  pendingResponses: number;
+  requestTypesCount: number;
+  completionRate: number;
+}
+
+export interface HrResponseDto {
+  id: string;
+  requestTypeId: string;
+  requestTypeName: string;
+  requestTypeIcon: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  versionNumber: number;
+  isComplete: boolean;
+  startedAt: string;
+  completedAt: string | null;
+}
+
+export interface HrResponsesListResponse {
+  responses: HrResponseDto[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface HrRequestTypeDto {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  currentVersionNumber: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  totalResponses: number;
+  completedResponses: number;
+}
+
+export interface HrRequestTypeDetailDto {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  currentVersionNumber: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  versions: HrRequestTypeVersionDto[];
+}
+
+export interface HrRequestTypeVersionDto {
+  id: string;
+  versionNumber: number;
+  formJson: string;
+  createdAt: string;
+  responseCount: number;
+}
+
+export interface HrUpdateRequestTypeRequest {
+  name: string;
+  description: string | null;
+  icon: string | null;
+  formJson: string;
+  isActive: boolean;
+}
+
+export interface HrResponseDetailDto {
+  id: string;
+  requestTypeId: string;
+  requestTypeName: string;
+  requestTypeIcon: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  versionNumber: number;
+  responseJson: string;
+  formJson: string;
+  isComplete: boolean;
+  startedAt: string;
+  completedAt: string | null;
 }
 
 export const api = new ApiClient();

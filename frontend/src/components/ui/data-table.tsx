@@ -1,9 +1,27 @@
 import * as React from 'react';
 import { useState, useMemo } from 'react';
-import { motion } from '@/components/ui/motion';
-import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  Paper,
+  TextField,
+  InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Typography,
+  Box,
+  Fade,
+} from '@mui/material';
+import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Search, ChevronUp, ChevronDown, ChevronsUpDown, X } from 'lucide-react';
 
 export interface Column<T> {
   key: keyof T | string;
@@ -12,6 +30,7 @@ export interface Column<T> {
   filterable?: boolean;
   render?: (item: T) => React.ReactNode;
   getValue?: (item: T) => string | number;
+  width?: number | string;
 }
 
 export interface FilterOption {
@@ -33,7 +52,7 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
-type SortDirection = 'asc' | 'desc' | null;
+type SortDirection = 'asc' | 'desc';
 
 export function DataTable<T>({
   data,
@@ -46,17 +65,12 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [activeFilter, setActiveFilter] = useState<string>('');
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
-      if (sortDirection === 'asc') {
-        setSortDirection('desc');
-      } else if (sortDirection === 'desc') {
-        setSortKey(null);
-        setSortDirection(null);
-      }
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortKey(key);
       setSortDirection('asc');
@@ -88,7 +102,7 @@ export function DataTable<T>({
     }
 
     // Apply sorting
-    if (sortKey && sortDirection) {
+    if (sortKey) {
       result.sort((a, b) => {
         const col = columns.find((c) => c.key === sortKey);
         const aValue = col?.getValue
@@ -114,133 +128,131 @@ export function DataTable<T>({
     return result;
   }, [data, searchQuery, activeFilter, filterOptions, sortKey, sortDirection, columns]);
 
-  const getSortIcon = (key: string) => {
-    if (sortKey !== key) {
-      return <ChevronsUpDown className="h-4 w-4 text-muted-foreground/50" />;
-    }
-    if (sortDirection === 'asc') {
-      return <ChevronUp className="h-4 w-4 text-primary" />;
-    }
-    return <ChevronDown className="h-4 w-4 text-primary" />;
-  };
-
   const hasActiveFilters = searchQuery || activeFilter;
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <Box className={cn('space-y-4', className)}>
       {/* Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-background/50 border-border/50 focus:border-primary/50"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+        <TextField
+          placeholder={searchPlaceholder}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          size="small"
+          sx={{ flex: 1 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </InputAdornment>
+            ),
+            endAdornment: searchQuery && (
+              <InputAdornment position="end">
+                <IconButton size="small" onClick={() => setSearchQuery('')}>
+                  <X className="h-4 w-4" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
 
         {filterOptions && (
-          <div className="flex gap-2">
-            <select
-              value={activeFilter || ''}
-              onChange={(e) => setActiveFilter(e.target.value || null)}
-              className="h-10 px-3 rounded-md border border-border/50 bg-background/50 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary/50 min-w-[140px]"
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <InputLabel>{filterOptions.label}</InputLabel>
+            <Select
+              value={activeFilter}
+              onChange={(e) => setActiveFilter(e.target.value)}
+              label={filterOptions.label}
             >
-              <option value="">All {filterOptions.label}</option>
+              <MenuItem value="">All {filterOptions.label}</MenuItem>
               {filterOptions.options.map((option) => (
-                <option key={option.value} value={option.value}>
+                <MenuItem key={option.value} value={option.value}>
                   {option.label}
-                </option>
+                </MenuItem>
               ))}
-            </select>
-          </div>
+            </Select>
+          </FormControl>
         )}
 
         {hasActiveFilters && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={() => {
-              setSearchQuery('');
-              setActiveFilter(null);
-            }}
-            className="h-10 px-3 rounded-md border border-border/50 bg-background/50 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-colors flex items-center gap-2"
-          >
-            <X className="h-4 w-4" />
-            Clear
-          </motion.button>
+          <Fade in>
+            <IconButton
+              onClick={() => {
+                setSearchQuery('');
+                setActiveFilter('');
+              }}
+              size="small"
+              sx={{ border: 1, borderColor: 'divider', borderRadius: 1, px: 2 }}
+            >
+              <X className="h-4 w-4" />
+              <Typography variant="body2" sx={{ ml: 1 }}>Clear</Typography>
+            </IconButton>
+          </Fade>
         )}
-      </div>
+      </Box>
 
       {/* Results count */}
-      <div className="text-sm text-muted-foreground">
+      <Typography variant="body2" color="text.secondary">
         Showing {filteredAndSortedData.length} of {data.length} results
-      </div>
+      </Typography>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-border/30">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border/50 bg-muted/30">
+      <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 'none', border: 1, borderColor: 'divider' }}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'action.hover' }}>
               {columns.map((col) => (
-                <th
+                <TableCell
                   key={String(col.key)}
-                  className={cn(
-                    'text-left py-3 px-4 font-medium text-muted-foreground text-sm',
-                    col.sortable && 'cursor-pointer hover:text-foreground transition-colors select-none'
-                  )}
-                  onClick={() => col.sortable && handleSort(String(col.key))}
+                  sx={{ fontWeight: 600, width: col.width }}
+                  sortDirection={sortKey === col.key ? sortDirection : false}
                 >
-                  <div className="flex items-center gap-2">
-                    {col.header}
-                    {col.sortable && getSortIcon(String(col.key))}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAndSortedData.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="py-8 text-center">
-                  {emptyState || (
-                    <div className="text-muted-foreground">
-                      {data.length === 0 ? 'No data available' : 'No matching results'}
-                    </div>
+                  {col.sortable ? (
+                    <TableSortLabel
+                      active={sortKey === col.key}
+                      direction={sortKey === col.key ? sortDirection : 'asc'}
+                      onClick={() => handleSort(String(col.key))}
+                    >
+                      {col.header}
+                    </TableSortLabel>
+                  ) : (
+                    col.header
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredAndSortedData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 4 }}>
+                  {emptyState || (
+                    <Typography color="text.secondary">
+                      {data.length === 0 ? 'No data available' : 'No matching results'}
+                    </Typography>
+                  )}
+                </TableCell>
+              </TableRow>
             ) : (
-              filteredAndSortedData.map((item, index) => (
-                <motion.tr
+              filteredAndSortedData.map((item) => (
+                <TableRow
                   key={String(item[keyField])}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.03 * index }}
-                  className="border-b border-border/30 last:border-0 hover:bg-white/5 transition-colors"
+                  hover
+                  sx={{ '&:last-child td': { borderBottom: 0 } }}
                 >
                   {columns.map((col) => (
-                    <td key={String(col.key)} className="py-4 px-4">
+                    <TableCell key={String(col.key)}>
                       {col.render
                         ? col.render(item)
                         : String(item[col.key as keyof T] ?? '')}
-                    </td>
+                    </TableCell>
                   ))}
-                </motion.tr>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
