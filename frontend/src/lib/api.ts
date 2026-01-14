@@ -15,7 +15,19 @@ import type {
   CreateRequestTypeRequest,
   UpdateRequestTypeRequest,
   FileUploadResponse,
-  FileInfo
+  FileInfo,
+  // Consultant types
+  ConsultantLoginRequest,
+  ConsultantLoginResponse,
+  TenantSummary,
+  TenantDetail,
+  CrossTenantRequest,
+  ConsultantRequestType,
+  ConsultantDashboardStats,
+  TenantSettings,
+  TenantBranding,
+  UpdateRequestTypeStatusRequest,
+  Consultant,
 } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -37,6 +49,7 @@ function mapUserRole(user: User & { role: number | UserRole }): User {
 class ApiClient {
   private accessToken: string | null = null;
   private tenantSlug: string | null = null;
+  private activeTenantSlug: string | null = null; // For consultant mode
 
   setAccessToken(token: string | null) {
     this.accessToken = token;
@@ -44,6 +57,10 @@ class ApiClient {
 
   setTenantSlug(slug: string | null) {
     this.tenantSlug = slug;
+  }
+
+  setActiveTenantSlug(slug: string | null) {
+    this.activeTenantSlug = slug;
   }
 
   private async request<T>(
@@ -61,6 +78,11 @@ class ApiClient {
 
     if (this.tenantSlug) {
       (headers as Record<string, string>)['X-Tenant-ID'] = this.tenantSlug;
+    }
+
+    // For consultant mode - sets active tenant context
+    if (this.activeTenantSlug) {
+      (headers as Record<string, string>)['X-Active-Tenant-ID'] = this.activeTenantSlug;
     }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
@@ -284,6 +306,117 @@ class ApiClient {
 
   async getResponseFiles(responseId: string): Promise<FileInfo[]> {
     return this.request<FileInfo[]>(`/api/files/admin/response/${responseId}`);
+  }
+
+  // ============================================
+  // CONSULTANT API METHODS
+  // ============================================
+
+  // Consultant Auth
+  async consultantLogin(data: ConsultantLoginRequest): Promise<ConsultantLoginResponse> {
+    return this.request<ConsultantLoginResponse>('/api/consultant/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async consultantRefresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+    return this.request('/api/consultant/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async consultantLogout(refreshToken: string): Promise<void> {
+    await this.request('/api/consultant/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async getConsultantProfile(): Promise<{ consultant: Consultant; assignedTenants: TenantSummary[] }> {
+    return this.request('/api/consultant/auth/me');
+  }
+
+  // Consultant Tenants
+  async getConsultantTenants(): Promise<TenantSummary[]> {
+    return this.request<TenantSummary[]>('/api/consultant/tenants');
+  }
+
+  async getConsultantTenantDetail(tenantId: string): Promise<TenantDetail> {
+    return this.request<TenantDetail>(`/api/consultant/tenants/${tenantId}`);
+  }
+
+  async updateConsultantTenantSettings(tenantId: string, settings: TenantSettings): Promise<void> {
+    await this.request(`/api/consultant/tenants/${tenantId}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify({ settings }),
+    });
+  }
+
+  async updateConsultantTenantBranding(tenantId: string, branding: TenantBranding): Promise<void> {
+    await this.request(`/api/consultant/tenants/${tenantId}/branding`, {
+      method: 'PUT',
+      body: JSON.stringify({ branding }),
+    });
+  }
+
+  // Consultant Request Types
+  async getConsultantTenantRequestTypes(tenantId: string): Promise<ConsultantRequestType[]> {
+    return this.request<ConsultantRequestType[]>(`/api/consultant/tenants/${tenantId}/request-types`);
+  }
+
+  async getConsultantTenantRequestType(tenantId: string, requestTypeId: string): Promise<RequestType> {
+    return this.request<RequestType>(`/api/consultant/tenants/${tenantId}/request-types/${requestTypeId}`);
+  }
+
+  async createConsultantTenantRequestType(tenantId: string, data: CreateRequestTypeRequest): Promise<ConsultantRequestType> {
+    return this.request<ConsultantRequestType>(`/api/consultant/tenants/${tenantId}/request-types`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConsultantTenantRequestType(
+    tenantId: string,
+    requestTypeId: string,
+    data: { name: string; description?: string | null; icon?: string | null; formJson?: string }
+  ): Promise<void> {
+    await this.request(`/api/consultant/tenants/${tenantId}/request-types/${requestTypeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConsultantTenantRequestTypeStatus(
+    tenantId: string,
+    requestTypeId: string,
+    data: UpdateRequestTypeStatusRequest
+  ): Promise<void> {
+    await this.request(`/api/consultant/tenants/${tenantId}/request-types/${requestTypeId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteConsultantTenantRequestType(tenantId: string, requestTypeId: string): Promise<void> {
+    await this.request(`/api/consultant/tenants/${tenantId}/request-types/${requestTypeId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Consultant Responses
+  async getConsultantTenantResponses(tenantId: string): Promise<RequestResponse[]> {
+    return this.request<RequestResponse[]>(`/api/consultant/tenants/${tenantId}/responses`);
+  }
+
+  // Cross-Tenant Views
+  async getConsultantCrossTenantRequests(): Promise<CrossTenantRequest[]> {
+    return this.request<CrossTenantRequest[]>('/api/consultant/requests');
+  }
+
+  async getConsultantDashboardStats(): Promise<ConsultantDashboardStats> {
+    return this.request<ConsultantDashboardStats>('/api/consultant/requests/stats');
   }
 }
 
