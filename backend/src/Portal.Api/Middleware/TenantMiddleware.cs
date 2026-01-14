@@ -18,8 +18,16 @@ public class TenantMiddleware
         // Skip tenant resolution for certain paths
         var path = context.Request.Path.Value?.ToLower() ?? "";
         if (path.StartsWith("/api/tenants/resolve") ||
+            path.StartsWith("/api/consultant") ||
             path.StartsWith("/swagger") ||
             path.StartsWith("/health"))
+        {
+            await _next(context);
+            return;
+        }
+
+        // Skip if already in consultant mode (handled by ConsultantMiddleware)
+        if (tenantContext.IsConsultantMode)
         {
             await _next(context);
             return;

@@ -50,6 +50,7 @@ builder.Services.AddScoped<ITenantContext, TenantContext>();
 // Services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IHrConsultantAuthService, HrConsultantAuthService>();
 
 // File storage
 builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
@@ -91,6 +92,15 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireClaim("role", "Admin"));
+
+    // Consultant policies
+    options.AddPolicy("ConsultantOnly", policy =>
+        policy.RequireClaim("is_consultant", "true"));
+
+    options.AddPolicy("ConsultantOrAdmin", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("role", "Admin") ||
+            context.User.HasClaim("is_consultant", "true")));
 });
 
 // CORS
@@ -128,11 +138,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 
-// Tenant middleware (before auth)
-app.UseTenantMiddleware();
-
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Consultant middleware (after auth, before tenant)
+app.UseConsultantMiddleware();
+
+// Tenant middleware (skipped for consultant routes)
+app.UseTenantMiddleware();
 
 // Map endpoints
 app.MapAuthEndpoints();
@@ -142,6 +155,7 @@ app.MapDashboardEndpoints();
 app.MapBillingEndpoints();
 app.MapRequestEndpoints();
 app.MapFileEndpoints();
+app.MapConsultantEndpoints();
 
 // Health check
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
