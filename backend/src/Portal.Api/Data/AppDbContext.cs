@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<RequestTypeVersion> RequestTypeVersions => Set<RequestTypeVersion>();
     public DbSet<RequestResponse> RequestResponses => Set<RequestResponse>();
     public DbSet<UploadedFile> UploadedFiles => Set<UploadedFile>();
+    public DbSet<HrConsultant> HrConsultants => Set<HrConsultant>();
+    public DbSet<HrConsultantTenantAssignment> HrConsultantTenantAssignments => Set<HrConsultantTenantAssignment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,9 +87,15 @@ public class AppDbContext : DbContext
             entity.HasIndex(e => e.Token).IsUnique();
             entity.Property(e => e.Token).HasMaxLength(500);
 
+            // UserId is now nullable - can belong to User or HrConsultant
             entity.HasOne(e => e.User)
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.HrConsultant)
+                .WithMany(c => c.RefreshTokens)
+                .HasForeignKey(e => e.HrConsultantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -185,11 +193,41 @@ public class AppDbContext : DbContext
                 .HasFilter("\"RequestResponseId\" IS NULL");
         });
 
+        // HrConsultant configuration
+        modelBuilder.Entity<HrConsultant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.Name).HasMaxLength(100);
+        });
+
+        // HrConsultantTenantAssignment configuration
+        modelBuilder.Entity<HrConsultantTenantAssignment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.HrConsultantId, e.TenantId }).IsUnique();
+
+            entity.HasOne(e => e.HrConsultant)
+                .WithMany(c => c.TenantAssignments)
+                .HasForeignKey(e => e.HrConsultantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Tenant)
+                .WithMany(t => t.ConsultantAssignments)
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         // Global query filter for multi-tenancy
         modelBuilder.Entity<User>().HasQueryFilter(u => u.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<Invitation>().HasQueryFilter(i => i.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<AuditLog>().HasQueryFilter(a => a.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
-        modelBuilder.Entity<RefreshToken>().HasQueryFilter(r => r.User.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
+        // RefreshToken filter: allow user tokens for current tenant OR consultant tokens (HrConsultantId is set)
+        modelBuilder.Entity<RefreshToken>().HasQueryFilter(r =>
+            (r.UserId != null && r.User!.TenantId == _tenantContext.TenantId) ||
+            r.HrConsultantId != null ||
+            _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<RequestType>().HasQueryFilter(s => s.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<RequestTypeVersion>().HasQueryFilter(v => v.RequestType.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
         modelBuilder.Entity<RequestResponse>().HasQueryFilter(r => r.RequestTypeVersion.RequestType.TenantId == _tenantContext.TenantId || _tenantContext.TenantId == Guid.Empty);
