@@ -163,6 +163,9 @@ export function HrRequestTypesPage() {
                 { label: 'Inactive', value: 'false' },
               ],
             }}
+            pagination
+            defaultPageSize={25}
+            pageSizeOptions={[10, 25, 50]}
           />
         )}
       </motion.div>

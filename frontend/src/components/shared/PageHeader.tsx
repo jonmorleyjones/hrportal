@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { motion } from '@/components/ui/motion';
 
 interface PageHeaderProps {
-  title: string;
+  title: ReactNode;
   description?: string;
   actions?: ReactNode;
 }

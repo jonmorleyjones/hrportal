@@ -334,6 +334,9 @@ export function CompletedRequestsPage() {
                 columns={columns}
                 keyField="id"
                 searchPlaceholder="Search completed requests..."
+                pagination
+                defaultPageSize={10}
+                pageSizeOptions={[10, 25, 50]}
                 emptyState={
                   <div className="text-center py-12">
                     <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

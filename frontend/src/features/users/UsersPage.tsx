@@ -5,26 +5,28 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DataTable, type Column } from '@/components/ui/data-table';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Menu,
   MenuItem,
   Chip,
   Avatar,
-  Skeleton as MuiSkeleton,
   Box,
 } from '@mui/material';
-import { motion, AnimatePresence } from '@/components/ui/motion';
-import { Plus, MoreHorizontal, UserMinus, Shield, Mail, X, Send, UserCircle } from 'lucide-react';
+import { motion, AnimatePresence, Skeleton } from '@/components/ui/motion';
+import { Plus, MoreHorizontal, UserMinus, Shield, Mail, X, Send, UserCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
 import type { UserRole } from '@/types';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  lastLoginAt?: string | null;
+  isActive: boolean;
+}
 
 export function UsersPage() {
   const queryClient = useQueryClient();
@@ -34,7 +36,7 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['users'],
-    queryFn: () => api.getUsers(1, 50),
+    queryFn: () => api.getUsers(1, 200),
   });
 
   const inviteMutation = useMutation({
@@ -60,6 +62,91 @@ export function UsersPage() {
       inviteMutation.mutate({ email: inviteEmail, role: inviteRole });
     }
   };
+
+  const columns: Column<User>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      render: (user) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            {user.name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .slice(0, 2)}
+          </Avatar>
+          <span className="font-medium">{user.name}</span>
+        </Box>
+      ),
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      sortable: true,
+      render: (user) => <span className="text-muted-foreground">{user.email}</span>,
+    },
+    {
+      key: 'role',
+      header: 'Role',
+      sortable: true,
+      render: (user) => (
+        <Chip label={user.role} size="small" variant="outlined" color="primary" />
+      ),
+    },
+    {
+      key: 'lastLoginAt',
+      header: 'Last Login',
+      sortable: true,
+      getValue: (user) => (user.lastLoginAt ? new Date(user.lastLoginAt).getTime() : 0),
+      render: (user) => (
+        <span className="text-sm text-muted-foreground">
+          {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
+        </span>
+      ),
+    },
+    {
+      key: 'isActive',
+      header: 'Status',
+      sortable: true,
+      render: (user) => (
+        <span
+          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+            user.isActive
+              ? 'bg-green-500/10 text-green-400'
+              : 'bg-red-500/10 text-red-400'
+          }`}
+        >
+          {user.isActive ? (
+            <CheckCircle2 className="h-3 w-3" />
+          ) : (
+            <XCircle className="h-3 w-3" />
+          )}
+          {user.isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      width: 48,
+      render: (user) => (
+        <UserActionsMenu
+          user={user}
+          onDeactivate={() => deactivateMutation.mutate(user.id)}
+        />
+      ),
+    },
+  ];
 
   return (
     <div>
@@ -148,68 +235,64 @@ export function UsersPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="glass rounded-xl overflow-hidden"
+        className="glass rounded-xl p-6"
       >
         {isLoading ? (
-          <Box sx={{ p: 3 }}>
+          <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <MuiSkeleton variant="circular" width={40} height={40} />
-                <Box sx={{ flex: 1 }}>
-                  <MuiSkeleton variant="text" width="25%" />
-                  <MuiSkeleton variant="text" width="33%" />
-                </Box>
-              </Box>
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              </div>
             ))}
-          </Box>
-        ) : data?.users.length === 0 ? (
-          <div className="p-12 text-center">
-            <UserCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No users found</p>
-            <Button
-              onClick={() => setShowInviteForm(true)}
-              variant="outline"
-              className="mt-4"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Invite your first user
-            </Button>
           </div>
         ) : (
-          <TableContainer component={Paper} sx={{ boxShadow: 'none', bgcolor: 'transparent' }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Last Login</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                  <TableCell sx={{ width: 48 }}></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data?.users.map((user) => (
-                  <UserTableRow
-                    key={user.id}
-                    user={user}
-                    onDeactivate={() => deactivateMutation.mutate(user.id)}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataTable
+            data={(data?.users || []) as User[]}
+            columns={columns}
+            keyField="id"
+            searchPlaceholder="Search users by name or email..."
+            filterOptions={{
+              key: 'isActive',
+              label: 'Status',
+              options: [
+                { label: 'Active', value: 'true' },
+                { label: 'Inactive', value: 'false' },
+              ],
+            }}
+            pagination
+            defaultPageSize={25}
+            pageSizeOptions={[10, 25, 50, 100]}
+            emptyState={
+              <div className="text-center py-12">
+                <UserCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                <p className="text-muted-foreground mb-4">
+                  Get started by inviting your first user
+                </p>
+                <Button
+                  onClick={() => setShowInviteForm(true)}
+                  className="bg-gradient-to-r from-primary to-accent"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Invite User
+                </Button>
+              </div>
+            }
+          />
         )}
       </motion.div>
     </div>
   );
 }
 
-function UserTableRow({
-  user,
-  onDeactivate
+function UserActionsMenu({
+  onDeactivate,
 }: {
-  user: { id: string; name: string; email: string; role: string; lastLoginAt?: string | null; isActive: boolean };
+  user: User;
   onDeactivate: () => void;
 }) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -224,78 +307,32 @@ function UserTableRow({
   };
 
   return (
-    <TableRow hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-      <TableCell>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-              fontSize: '0.875rem',
-              fontWeight: 500
-            }}
-          >
-            {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-          </Avatar>
-          <span className="font-medium">{user.name}</span>
-        </Box>
-      </TableCell>
-      <TableCell sx={{ color: 'text.secondary' }}>{user.email}</TableCell>
-      <TableCell>
-        <Chip
-          label={user.role}
-          size="small"
-          variant="outlined"
-          color="primary"
-        />
-      </TableCell>
-      <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-        {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never'}
-      </TableCell>
-      <TableCell>
-        <Chip
-          label={user.isActive ? 'Active' : 'Inactive'}
-          size="small"
-          color={user.isActive ? 'success' : 'error'}
-          variant="outlined"
-          icon={
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                backgroundColor: user.isActive ? '#4caf50' : '#f44336',
-                marginLeft: 8
-              }}
-            />
-          }
-        />
-      </TableCell>
-      <TableCell>
-        <IconButton size="small" onClick={handleClick}>
-          <MoreHorizontal className="h-4 w-4" />
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+    <>
+      <IconButton size="small" onClick={handleClick}>
+        <MoreHorizontal className="h-4 w-4" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleClose}>
+          <Shield className="h-4 w-4 mr-2" />
+          Change Role
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            onDeactivate();
+            handleClose();
+          }}
+          sx={{ color: 'error.main' }}
         >
-          <MenuItem onClick={handleClose}>
-            <Shield className="h-4 w-4 mr-2" />
-            Change Role
-          </MenuItem>
-          <MenuItem
-            onClick={() => { onDeactivate(); handleClose(); }}
-            sx={{ color: 'error.main' }}
-          >
-            <UserMinus className="h-4 w-4 mr-2" />
-            Deactivate
-          </MenuItem>
-        </Menu>
-      </TableCell>
-    </TableRow>
+          <UserMinus className="h-4 w-4 mr-2" />
+          Deactivate
+        </MenuItem>
+      </Menu>
+    </>
   );
 }

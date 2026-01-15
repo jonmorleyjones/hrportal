@@ -168,6 +168,9 @@ export function HrResponsesPage() {
                 { label: 'In Progress', value: 'false' },
               ],
             }}
+            pagination
+            defaultPageSize={25}
+            pageSizeOptions={[10, 25, 50, 100]}
           />
         )}
       </motion.div>

@@ -145,6 +145,9 @@ function InvoiceHistoryTable({ invoices, isLoading }: { invoices: Invoice[]; isL
                 { label: 'Pending', value: 'pending' },
               ],
             }}
+            pagination
+            defaultPageSize={10}
+            pageSizeOptions={[10, 25, 50]}
             emptyState={
               <div className="text-center py-4">
                 <Receipt className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
