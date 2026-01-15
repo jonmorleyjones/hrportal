@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ESignedPdf</RootNamespace>
+    <AssemblyName>ESignedPdf</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>HR Portal Team</Authors>
+    <Description>A .NET library for creating legally recognizable e-signed PDF documents with PAdES compliance</Description>
+    <PackageTags>pdf;esignature;digital-signature;pades;pkcs7;x509</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- iText7 for PDF manipulation and digital signatures (AGPL licensed) -->
+    <PackageReference Include="itext7" Version="8.0.2" />
+    <PackageReference Include="itext7.bouncy-castle-adapter" Version="8.0.2" />
+
+    <!-- BouncyCastle for cryptographic operations -->
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.2.1" />
+
+    <!-- For timestamp authority requests -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" />
+
+    <!-- For dependency injection extensions -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>
