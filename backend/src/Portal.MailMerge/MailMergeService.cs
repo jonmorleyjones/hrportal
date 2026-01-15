@@ -66,32 +66,35 @@ public class MailMergeService : IMailMergeService
             memoryStream.Write(templateBytes, 0, templateBytes.Length);
             memoryStream.Position = 0;
 
-            using var document = WordprocessingDocument.Open(memoryStream, true);
-
-            if (document.MainDocumentPart?.Document?.Body == null)
-                return MergeResult.Failed("Invalid Word document: missing main document body.");
-
             var fieldsFound = new List<string>();
             var fieldsReplaced = new List<string>();
             var unmatchedFields = new List<string>();
 
-            // Process main document body
-            ProcessDocumentPart(document.MainDocumentPart, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
-
-            // Process headers
-            foreach (var headerPart in document.MainDocumentPart.HeaderParts)
+            // Open, process, and close the document before reading the stream
+            using (var document = WordprocessingDocument.Open(memoryStream, true))
             {
-                ProcessHeaderFooter(headerPart.Header, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
+                if (document.MainDocumentPart?.Document?.Body == null)
+                    return MergeResult.Failed("Invalid Word document: missing main document body.");
+
+                // Process main document body
+                ProcessDocumentPart(document.MainDocumentPart, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
+
+                // Process headers
+                foreach (var headerPart in document.MainDocumentPart.HeaderParts)
+                {
+                    ProcessHeaderFooter(headerPart.Header, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
+                }
+
+                // Process footers
+                foreach (var footerPart in document.MainDocumentPart.FooterParts)
+                {
+                    ProcessHeaderFooter(footerPart.Footer, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
+                }
+
+                document.MainDocumentPart.Document.Save();
             }
 
-            // Process footers
-            foreach (var footerPart in document.MainDocumentPart.FooterParts)
-            {
-                ProcessHeaderFooter(footerPart.Footer, mergeData, options, fieldsFound, fieldsReplaced, unmatchedFields);
-            }
-
-            document.MainDocumentPart.Document.Save();
-
+            // Document is now closed, stream contains the final content
             return MergeResult.Successful(
                 memoryStream.ToArray(),
                 fieldsFound.Distinct().ToList(),
@@ -107,6 +110,10 @@ public class MailMergeService : IMailMergeService
     /// <inheritdoc />
     public MergeResult Merge<T>(string templatePath, T data, MergeFieldOptions? options = null) where T : class
     {
+        // If data is already a dictionary, use it directly
+        if (data is IDictionary<string, string> dict)
+            return Merge(templatePath, dict, options);
+
         var mergeData = ObjectToDictionary(data);
         return Merge(templatePath, mergeData, options);
     }
@@ -114,6 +121,9 @@ public class MailMergeService : IMailMergeService
     /// <inheritdoc />
     public MergeResult Merge<T>(Stream templateStream, T data, MergeFieldOptions? options = null) where T : class
     {
+        if (data is IDictionary<string, string> dict)
+            return Merge(templateStream, dict, options);
+
         var mergeData = ObjectToDictionary(data);
         return Merge(templateStream, mergeData, options);
     }
@@ -121,6 +131,9 @@ public class MailMergeService : IMailMergeService
     /// <inheritdoc />
     public MergeResult Merge<T>(byte[] templateBytes, T data, MergeFieldOptions? options = null) where T : class
     {
+        if (data is IDictionary<string, string> dict)
+            return Merge(templateBytes, dict, options);
+
         var mergeData = ObjectToDictionary(data);
         return Merge(templateBytes, mergeData, options);
     }
@@ -256,18 +269,20 @@ public class MailMergeService : IMailMergeService
     private void ProcessParagraph(Paragraph paragraph, IDictionary<string, string> mergeData,
         MergeFieldOptions options, List<string> fieldsFound, List<string> fieldsReplaced, List<string> unmatchedFields)
     {
-        // Get all text content from the paragraph, accounting for split runs
-        var runs = paragraph.Descendants<Run>().ToList();
-        if (runs.Count == 0) return;
+        // Get all text elements from the paragraph
+        var textElements = paragraph.Descendants<Text>().ToList();
+        if (textElements.Count == 0) return;
 
         // Collect all text content to find merge fields
-        var fullText = string.Join("", runs.SelectMany(r => r.Descendants<Text>()).Select(t => t.Text));
+        var fullText = string.Join("", textElements.Select(t => t.Text));
         var pattern = BuildFieldPattern(options);
         var matches = Regex.Matches(fullText, pattern);
 
         if (matches.Count == 0) return;
 
-        // For each match, find the field name and replace it
+        // Track what replacements we need to make
+        var replacements = new Dictionary<string, string>();
+
         foreach (Match match in matches)
         {
             var fieldName = match.Groups[1].Value.Trim();
@@ -277,10 +292,9 @@ public class MailMergeService : IMailMergeService
                 ? mergeData.Keys.FirstOrDefault(k => k.Equals(fieldName, StringComparison.OrdinalIgnoreCase))
                 : mergeData.Keys.FirstOrDefault(k => k == fieldName);
 
-            string? replacementValue = null;
             if (lookupKey != null)
             {
-                replacementValue = mergeData[lookupKey];
+                replacements[match.Value] = mergeData[lookupKey];
                 fieldsReplaced.Add(fieldName);
             }
             else
@@ -288,91 +302,27 @@ public class MailMergeService : IMailMergeService
                 unmatchedFields.Add(fieldName);
                 if (options.RemoveUnmatchedFields)
                 {
-                    replacementValue = options.UnmatchedFieldReplacement;
+                    replacements[match.Value] = options.UnmatchedFieldReplacement;
                 }
             }
+        }
 
-            if (replacementValue != null)
+        if (replacements.Count == 0) return;
+
+        // Apply all replacements to the full text
+        var resultText = fullText;
+        foreach (var (placeholder, replacement) in replacements)
+        {
+            resultText = resultText.Replace(placeholder, replacement);
+        }
+
+        // Put the result in the first text element, clear the rest
+        if (textElements.Count > 0)
+        {
+            textElements[0].Text = resultText;
+            for (int i = 1; i < textElements.Count; i++)
             {
-                ReplaceFieldInParagraph(paragraph, match.Value, replacementValue);
-            }
-        }
-    }
-
-    private void ReplaceFieldInParagraph(Paragraph paragraph, string fieldPlaceholder, string replacement)
-    {
-        // Rebuild paragraph text and replace the field
-        var runs = paragraph.Descendants<Run>().ToList();
-        if (runs.Count == 0) return;
-
-        // Get all text elements
-        var textElements = runs.SelectMany(r => r.Descendants<Text>()).ToList();
-        if (textElements.Count == 0) return;
-
-        // Build a map of character positions to text elements
-        var fullText = new System.Text.StringBuilder();
-        var charMap = new List<(Text textElement, int startIndex, int endIndex)>();
-
-        foreach (var text in textElements)
-        {
-            var start = fullText.Length;
-            fullText.Append(text.Text ?? "");
-            charMap.Add((text, start, fullText.Length - 1));
-        }
-
-        var textString = fullText.ToString();
-        var fieldIndex = textString.IndexOf(fieldPlaceholder, StringComparison.Ordinal);
-
-        if (fieldIndex < 0) return;
-
-        var fieldEndIndex = fieldIndex + fieldPlaceholder.Length - 1;
-
-        // Find which text elements contain the field
-        var affectedElements = charMap
-            .Where(m => m.endIndex >= fieldIndex && m.startIndex <= fieldEndIndex)
-            .ToList();
-
-        if (affectedElements.Count == 0) return;
-
-        if (affectedElements.Count == 1)
-        {
-            // Simple case: field is within a single text element
-            var (textElement, startIdx, _) = affectedElements[0];
-            var localStart = fieldIndex - startIdx;
-            textElement.Text = textElement.Text?.Remove(localStart, fieldPlaceholder.Length).Insert(localStart, replacement);
-        }
-        else
-        {
-            // Complex case: field spans multiple text elements
-            // Put the replacement in the first element and remove from others
-            var first = affectedElements.First();
-            var localStart = fieldIndex - first.startIndex;
-            var remainingInFirst = (first.textElement.Text?.Length ?? 0) - localStart;
-
-            // Update first element
-            first.textElement.Text = first.textElement.Text?.Substring(0, localStart) + replacement;
-
-            // Calculate how many characters of the field remain after the first element
-            var remainingFieldChars = fieldPlaceholder.Length - remainingInFirst;
-
-            // Process middle and last elements
-            for (int i = 1; i < affectedElements.Count; i++)
-            {
-                var (textElement, startIdx, _) = affectedElements[i];
-                var elementLength = textElement.Text?.Length ?? 0;
-
-                if (remainingFieldChars >= elementLength)
-                {
-                    // This entire element is part of the field
-                    textElement.Text = "";
-                    remainingFieldChars -= elementLength;
-                }
-                else
-                {
-                    // Only part of this element is the field
-                    textElement.Text = textElement.Text?.Substring(remainingFieldChars);
-                    remainingFieldChars = 0;
-                }
+                textElements[i].Text = string.Empty;
             }
         }
     }
@@ -412,6 +362,9 @@ public class MailMergeService : IMailMergeService
         foreach (var property in properties)
         {
             if (!property.CanRead) continue;
+
+            // Skip indexed properties (e.g., this[int index])
+            if (property.GetIndexParameters().Length > 0) continue;
 
             var value = property.GetValue(obj);
             var stringValue = value?.ToString() ?? string.Empty;
