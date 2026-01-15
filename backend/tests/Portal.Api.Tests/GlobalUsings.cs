@@ -3,6 +3,8 @@ global using Moq;
 global using FluentAssertions;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Hosting;
+global using Microsoft.AspNetCore.Hosting;
 global using System.Net.Http.Json;
 global using Portal.Api.Data;
 global using Portal.Api.Models;
