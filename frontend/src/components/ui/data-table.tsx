@@ -169,11 +169,12 @@ export function DataTable<T>({
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           gap: 2,
-          p: 2,
-          borderRadius: 2,
+          p: 2.5,
+          borderRadius: 3,
           bgcolor: 'rgba(255, 255, 255, 0.02)',
           border: '1px solid',
-          borderColor: 'divider',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+          backdropFilter: 'blur(8px)',
         }}
       >
         <TextField
@@ -184,13 +185,20 @@ export function DataTable<T>({
           sx={{
             flex: 1,
             '& .MuiOutlinedInput-root': {
-              bgcolor: 'background.paper',
+              bgcolor: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: 2,
+              transition: 'all 0.2s ease',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              },
               '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 0.05)',
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
+                  borderColor: 'rgba(139, 92, 246, 0.4)',
                 },
               },
               '&.Mui-focused': {
+                bgcolor: 'rgba(255, 255, 255, 0.05)',
                 '& .MuiOutlinedInput-notchedOutline': {
                   borderColor: 'primary.main',
                   borderWidth: 2,
@@ -206,7 +214,15 @@ export function DataTable<T>({
             ),
             endAdornment: searchQuery && (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchQuery('')}>
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchQuery('')}
+                  sx={{
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                    },
+                  }}
+                >
                   <X className="h-4 w-4" />
                 </IconButton>
               </InputAdornment>
@@ -218,9 +234,28 @@ export function DataTable<T>({
           <FormControl
             size="small"
             sx={{
-              minWidth: 160,
+              minWidth: 180,
               '& .MuiOutlinedInput-root': {
-                bgcolor: 'background.paper',
+                bgcolor: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: 2,
+                transition: 'all 0.2s ease',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                },
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.05)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(139, 92, 246, 0.4)',
+                  },
+                },
+                '&.Mui-focused': {
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'primary.main',
+                  },
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255, 255, 255, 0.6)',
               },
             }}
           >
@@ -257,14 +292,18 @@ export function DataTable<T>({
               size="medium"
               sx={{
                 height: 40,
-                bgcolor: 'error.main',
-                color: 'error.contrastText',
+                borderRadius: 2,
+                bgcolor: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                fontWeight: 500,
                 '& .MuiChip-deleteIcon': {
                   color: 'inherit',
                 },
                 '&:hover': {
-                  bgcolor: 'error.dark',
+                  bgcolor: 'rgba(239, 68, 68, 0.25)',
                 },
+                transition: 'all 0.2s ease',
               }}
             />
           </Fade>
@@ -292,20 +331,22 @@ export function DataTable<T>({
       <TableContainer
         component={Paper}
         sx={{
-          borderRadius: 2,
-          boxShadow: 'none',
-          border: 1,
-          borderColor: 'divider',
+          borderRadius: 3,
+          boxShadow: '0 4px 24px rgba(0, 0, 0, 0.25)',
+          border: '1px solid',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           overflow: 'hidden',
+          backdropFilter: 'blur(12px)',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)',
         }}
       >
         <Table>
           <TableHead>
             <TableRow
               sx={{
-                bgcolor: 'rgba(255, 255, 255, 0.03)',
-                borderBottom: '2px solid',
-                borderColor: 'divider',
+                background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%)',
+                borderBottom: '1px solid',
+                borderColor: 'rgba(139, 92, 246, 0.2)',
               }}
             >
               {columns.map((col) => (
@@ -314,11 +355,13 @@ export function DataTable<T>({
                   sx={{
                     fontWeight: 600,
                     width: col.width,
-                    color: 'text.primary',
-                    fontSize: '0.8125rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.75rem',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    py: 1.5,
+                    letterSpacing: '0.08em',
+                    py: 2,
+                    px: 2.5,
+                    borderBottom: 'none',
                   }}
                   sortDirection={sortKey === col.key ? sortDirection : false}
                 >
@@ -328,8 +371,13 @@ export function DataTable<T>({
                       direction={sortKey === col.key ? sortDirection : 'asc'}
                       onClick={() => handleSort(String(col.key))}
                       sx={{
-                        '&:hover': { color: 'primary.main' },
-                        '&.Mui-active': { color: 'primary.main' },
+                        '&:hover': { color: 'primary.light' },
+                        '&.Mui-active': {
+                          color: 'primary.light',
+                          '& .MuiTableSortLabel-icon': {
+                            color: 'primary.light',
+                          },
+                        },
                       }}
                     >
                       {col.header}
@@ -344,7 +392,7 @@ export function DataTable<T>({
           <TableBody>
             {paginatedData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 8, borderBottom: 'none' }}>
                   {emptyState || (
                     <Box sx={{ py: 4 }}>
                       <Typography color="text.secondary" sx={{ fontSize: '0.9375rem' }}>
@@ -354,7 +402,7 @@ export function DataTable<T>({
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          sx={{ mt: 1, opacity: 0.7 }}
+                          sx={{ mt: 1, opacity: 0.6 }}
                         >
                           Try adjusting your search or filters
                         </Typography>
@@ -371,10 +419,13 @@ export function DataTable<T>({
                   sx={{
                     '&:last-child td': { borderBottom: 0 },
                     '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.03)',
+                      bgcolor: 'rgba(139, 92, 246, 0.06)',
+                      '& td': {
+                        color: 'rgba(255, 255, 255, 0.95)',
+                      },
                     },
-                    bgcolor: index % 2 === 1 ? 'rgba(255, 255, 255, 0.01)' : 'transparent',
-                    transition: 'background-color 0.15s ease',
+                    bgcolor: index % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)',
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   {columns.map((col) => (
@@ -382,7 +433,11 @@ export function DataTable<T>({
                       key={String(col.key)}
                       sx={{
                         py: 2,
-                        borderColor: 'divider',
+                        px: 2.5,
+                        borderColor: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        fontSize: '0.875rem',
+                        transition: 'color 0.2s ease',
                       }}
                     >
                       {col.render
@@ -400,9 +455,10 @@ export function DataTable<T>({
         {pagination && filteredAndSortedData.length > 0 && (
           <Box
             sx={{
-              borderTop: 1,
-              borderColor: 'divider',
-              bgcolor: 'rgba(255, 255, 255, 0.02)',
+              borderTop: '1px solid',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
+              background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.04) 0%, rgba(139, 92, 246, 0.02) 100%)',
+              px: 1,
             }}
           >
             <TablePagination
@@ -416,26 +472,36 @@ export function DataTable<T>({
               labelRowsPerPage="Rows per page:"
               sx={{
                 '& .MuiTablePagination-select': {
-                  borderRadius: 1,
+                  borderRadius: 1.5,
+                  bgcolor: 'rgba(255, 255, 255, 0.03)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 0.06)',
+                  },
                 },
                 '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                  fontSize: '0.875rem',
+                  fontSize: '0.8125rem',
+                  color: 'rgba(255, 255, 255, 0.6)',
                 },
                 '& .MuiTablePagination-actions': {
-                  gap: 0.5,
+                  gap: 1,
+                  ml: 2,
                 },
                 '& .MuiIconButton-root': {
-                  borderRadius: 1,
+                  borderRadius: 1.5,
                   border: '1px solid',
-                  borderColor: 'divider',
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                  bgcolor: 'rgba(255, 255, 255, 0.02)',
                   '&:hover': {
                     bgcolor: 'primary.main',
                     borderColor: 'primary.main',
-                    color: 'primary.contrastText',
+                    color: 'white',
+                    transform: 'scale(1.05)',
                   },
                   '&.Mui-disabled': {
-                    opacity: 0.3,
+                    opacity: 0.25,
+                    borderColor: 'rgba(255, 255, 255, 0.05)',
                   },
+                  transition: 'all 0.2s ease',
                 },
               }}
               slotProps={{

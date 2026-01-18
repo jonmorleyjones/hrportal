@@ -187,3 +187,25 @@ export interface HrConsultantLoginResponse {
   hrConsultant: HrConsultant;
   assignedTenants: AssignedTenant[];
 }
+
+// HR Tenant Management Types
+export interface TenantListItem {
+  id: string;
+  name: string;
+  slug: string;
+  subscriptionTier: string;
+  isActive: boolean;
+  createdAt: string;
+  userCount: number;
+}
+
+export interface CreateTenantRequest {
+  name: string;
+  slug: string;
+  subscriptionTier: string;
+}
+
+export interface TenantListResponse {
+  tenants: TenantListItem[];
+  totalCount: number;
+}
