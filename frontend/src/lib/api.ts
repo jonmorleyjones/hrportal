@@ -17,7 +17,10 @@ import type {
   FileUploadResponse,
   FileInfo,
   HrConsultantLoginRequest,
-  HrConsultantLoginResponse
+  HrConsultantLoginResponse,
+  TenantListItem,
+  TenantListResponse,
+  CreateTenantRequest
 } from '@/types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -336,8 +339,37 @@ class ApiClient {
     });
   }
 
+  async createHrTenantRequestType(
+    tenantId: string,
+    data: HrCreateRequestTypeRequest
+  ): Promise<HrRequestTypeDto> {
+    return this.request<HrRequestTypeDto>(`/api/hr/tenants/${tenantId}/request-types`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getHrTenantResponseDetail(tenantId: string, responseId: string): Promise<HrResponseDetailDto> {
     return this.request<HrResponseDetailDto>(`/api/hr/tenants/${tenantId}/responses/${responseId}`);
+  }
+
+  // HR Tenant Management
+  async getHrTenants(): Promise<TenantListResponse> {
+    return this.request<TenantListResponse>('/api/hr/tenants');
+  }
+
+  async createHrTenant(data: CreateTenantRequest): Promise<TenantListItem> {
+    return this.request<TenantListItem>('/api/hr/tenants', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async toggleTenantStatus(tenantId: string, isActive: boolean): Promise<void> {
+    await this.request(`/api/hr/tenants/${tenantId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ isActive }),
+    });
   }
 }
 
@@ -418,6 +450,13 @@ export interface HrUpdateRequestTypeRequest {
   icon: string | null;
   formJson: string;
   isActive: boolean;
+}
+
+export interface HrCreateRequestTypeRequest {
+  name: string;
+  description: string | null;
+  icon: string | null;
+  formJson: string;
 }
 
 export interface HrResponseDetailDto {

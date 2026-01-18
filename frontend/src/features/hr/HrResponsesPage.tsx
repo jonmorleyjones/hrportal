@@ -12,6 +12,7 @@ import {
   AlertCircle,
   ChevronRight
 } from 'lucide-react';
+import { DynamicIcon } from '@/lib/icons';
 
 export function HrResponsesPage() {
   const { selectedTenant } = useHrConsultantAuthStore();
@@ -32,7 +33,9 @@ export function HrResponsesPage() {
           to={`/hr/responses/${item.id}`}
           className="flex items-center gap-2 group hover:text-primary transition-colors"
         >
-          <span className="text-lg">{item.requestTypeIcon || '📋'}</span>
+          <div className="p-1.5 rounded-md bg-primary/10">
+            <DynamicIcon name={item.requestTypeIcon} className="h-4 w-4 text-primary" />
+          </div>
           <span className="font-medium group-hover:underline">{item.requestTypeName}</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
         </Link>

@@ -1,44 +1,14 @@
 import { Link } from 'react-router-dom';
 import { motion } from '@/components/ui/motion';
 import type { RequestTypeCard as RequestTypeCardType } from '@/types';
-import {
-  ClipboardList,
-  UserPlus,
-  Laptop,
-  Calendar,
-  FileText,
-  Send,
-  HelpCircle,
-  Settings,
-  Briefcase,
-  Package,
-  CreditCard,
-  Phone,
-  type LucideIcon
-} from 'lucide-react';
-
-// Map icon string names to Lucide components
-const iconMap: Record<string, LucideIcon> = {
-  'clipboard-list': ClipboardList,
-  'user-plus': UserPlus,
-  'laptop': Laptop,
-  'calendar': Calendar,
-  'file-text': FileText,
-  'send': Send,
-  'help-circle': HelpCircle,
-  'settings': Settings,
-  'briefcase': Briefcase,
-  'package': Package,
-  'credit-card': CreditCard,
-  'phone': Phone,
-};
+import { getIconComponent } from '@/lib/icons';
 
 interface RequestTypeCardProps {
   requestType: RequestTypeCardType;
 }
 
 export function RequestTypeCard({ requestType }: RequestTypeCardProps) {
-  const IconComponent = iconMap[requestType.icon] || ClipboardList;
+  const IconComponent = getIconComponent(requestType.icon);
 
   return (
     <Link to={`/requests/${requestType.id}`}>

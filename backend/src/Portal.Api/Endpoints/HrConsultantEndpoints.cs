@@ -252,6 +252,87 @@ public static class HrConsultantEndpoints
         .WithDescription("Get request types for a tenant")
         .Produces<List<HrRequestTypeDto>>(200);
 
+        group.MapPost("/tenants/{tenantId}/request-types", async (
+            Guid tenantId,
+            HrCreateRequestTypeRequest request,
+            HttpContext httpContext,
+            AppDbContext dbContext) =>
+        {
+            var consultantId = GetConsultantId(httpContext);
+            if (consultantId == null)
+            {
+                return Results.Unauthorized();
+            }
+
+            // Verify consultant has access to this tenant and can manage request types
+            var assignment = await dbContext.HrConsultantTenantAssignments
+                .FirstOrDefaultAsync(a => a.HrConsultantId == consultantId
+                    && a.TenantId == tenantId
+                    && a.IsActive);
+
+            if (assignment == null || !assignment.CanManageRequestTypes)
+            {
+                return Results.Forbid();
+            }
+
+            // Verify the tenant exists
+            var tenantExists = await dbContext.Tenants.AnyAsync(t => t.Id == tenantId);
+            if (!tenantExists)
+            {
+                return Results.NotFound(new { error = "Tenant not found" });
+            }
+
+            // Create the request type
+            var requestType = new RequestType
+            {
+                TenantId = tenantId,
+                Name = request.Name,
+                Description = request.Description,
+                Icon = request.Icon ?? "file-text",
+                CurrentVersionNumber = 1,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            dbContext.RequestTypes.Add(requestType);
+            await dbContext.SaveChangesAsync();
+
+            // Create the first version
+            var version = new RequestTypeVersion
+            {
+                RequestTypeId = requestType.Id,
+                VersionNumber = 1,
+                FormJson = request.FormJson,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            dbContext.RequestTypeVersions.Add(version);
+            await dbContext.SaveChangesAsync();
+
+            // Update the request type to point to the active version
+            requestType.ActiveVersionId = version.Id;
+            await dbContext.SaveChangesAsync();
+
+            return Results.Created($"/api/hr/tenants/{tenantId}/request-types/{requestType.Id}", new HrRequestTypeDto(
+                requestType.Id,
+                requestType.Name,
+                requestType.Description,
+                requestType.Icon ?? "file-text",
+                requestType.CurrentVersionNumber,
+                requestType.IsActive,
+                requestType.CreatedAt,
+                requestType.UpdatedAt,
+                0,
+                0
+            ));
+        })
+        .WithName("CreateHrTenantRequestType")
+        .WithDescription("Create a new request type for a tenant")
+        .Produces<HrRequestTypeDto>(201)
+        .Produces(403)
+        .Produces(404);
+
         group.MapGet("/tenants/{tenantId}/request-types/{requestTypeId}", async (
             Guid tenantId,
             Guid requestTypeId,
@@ -549,6 +630,13 @@ public record HrUpdateRequestTypeRequest(
     string? Icon,
     string FormJson,
     bool IsActive
+);
+
+public record HrCreateRequestTypeRequest(
+    string Name,
+    string? Description,
+    string? Icon,
+    string FormJson
 );
 
 public record HrResponseDetailDto(
